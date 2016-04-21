@@ -2,7 +2,7 @@ SRC                     = base64.c
 OBJ                     = $(SRC:.c=.o)
 BINTEST    		= base64.elf
 CC         		= gcc
-FLAGS  		        = -Wall -W -pedantic
+FLAGS  		        = -Wall -W -pedantic -Wformat=0
 DEBUG_FLAGS             = -g -O0
 INC_FLAGS               = -I$(PWD)/../../api
 
