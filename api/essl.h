@@ -44,7 +44,7 @@ extern "C" {
 
   #include <string.h>
   #include <errno.h>
-  #include <openssl/sha.h>
+  #include <openssl/opensslconf.h>
 
 
   /*****************************************************
@@ -55,6 +55,7 @@ extern "C" {
    * \____|__  /_______  /\_______ \
    *         \/        \/         \/                               
    *****************************************************/
+#ifndef OPENSSL_NO_MD2
   #include <openssl/md2.h>
   /**
    * @def ESSL_MD2_STRING_LENGTH
@@ -105,7 +106,7 @@ extern "C" {
    * @return -1 on error, 0 else (see errno for more details).
    */
   int essl_md2_do_hash_file(const char* filename, essl_md2_digest_t result);
-
+#endif /* OPENSSL_NO_MD2 */
 
   /*****************************************************
    *    _____  ________      _____  
@@ -277,6 +278,7 @@ extern "C" {
    * /_______  /\___|_  /\____|__  /___|
    *         \/       \/         \/     
    *****************************************************/
+  #include <openssl/sha.h>
   /**
    * @def SHA_DIGEST_LENGTH
    * @brief The length of the SHA digest.

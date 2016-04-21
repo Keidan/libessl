@@ -57,7 +57,6 @@
  */
 #define ESSL_DEFAULT_BUFFER_LENGTH 1024
 
-
 /*****************************************************
  *    _____  ________   ________  
  *   /     \ \______ \  \_____  \
@@ -66,6 +65,7 @@
  * \____|__  /_______  /\_______ \
  *         \/        \/         \/                               
  *****************************************************/
+#ifndef OPENSSL_NO_MD2
 /**
  * @fn void essl_md2_do_hash(const char* str, size_t length, essl_md2_digest_t result) 
  * @brief Generate a MD2 digest
@@ -113,6 +113,7 @@ int essl_md2_do_hash_file(const char* filename, essl_md5_digest_t result) {
   errno = 0;
   return 0;
 }
+#endif /* OPENSSL_NO_MD2 */
 
 
 /*****************************************************
