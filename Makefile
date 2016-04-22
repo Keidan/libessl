@@ -15,7 +15,7 @@ clean:
 
 
 exec:
-	@for i in $(shell find ./demo -name *.elf); do \
+	@for i in $(shell find ./demo -name *.elf | sort); do \
 	  echo "Execute $$(basename $$i .elf):"; \
 	  LD_LIBRARY_PATH=./deploy/$$(uname -m) ./$$i;\
 	  echo ""; \
