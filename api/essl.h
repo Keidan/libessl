@@ -116,6 +116,7 @@ extern "C" {
    * \____|__  /_______  /\____   | 
    *         \/        \/      |__| 
    *****************************************************/
+#ifndef OPENSSL_NO_MD4
   #include <openssl/md4.h>
 
   /**
@@ -167,7 +168,7 @@ extern "C" {
    * @return -1 on error, 0 else (see errno for more details).
    */
   int essl_md4_do_hash_file(const char* filename, essl_md4_digest_t result);
-
+#endif /* OPENSSL_NO_MD4 */
 
   /*****************************************************
    *    _____  ________   .________
@@ -177,6 +178,7 @@ extern "C" {
    * \____|__  /_______  /______  /
    *         \/        \/       \/                                  
    *****************************************************/
+#ifndef OPENSSL_NO_MD5
   #include <openssl/md5.h>
 
   /**
@@ -228,7 +230,7 @@ extern "C" {
    * @return -1 on error, 0 else (see errno for more details).
    */
   int essl_md5_do_hash_file(const char* filename, essl_md5_digest_t result);
-
+#endif /* OPENSSL_NO_MD5 */
 
   /*****************************************************
    * __________    _____    ____________________   ________   _____  
@@ -238,6 +240,7 @@ extern "C" {
    *  |______  /\____|__  /_______  //_______  /  \_____  /\____   | 
    *         \/         \/        \/         \/         \/      |__| 
    *****************************************************/
+#ifndef OPENSSL_NO_BIO
   /**
    * @fn int essl_base64_encode(const char *input, const size_t ilength, char** output, size_t *olength)
    * @brief Encode a paln text to a base64 representation.
@@ -268,6 +271,7 @@ extern "C" {
    * @return The decoded length of the base64 message.
    */
   size_t essl_base64_adjust_decode_length(const char *input, const size_t ilength);
+#endif /* OPENSSL_NO_BIO */
 
 
   /*****************************************************
@@ -278,6 +282,7 @@ extern "C" {
    * /_______  /\___|_  /\____|__  /___|
    *         \/       \/         \/     
    *****************************************************/
+#ifndef OPENSSL_NO_SHA1
   #include <openssl/sha.h>
   /**
    * @def SHA_DIGEST_LENGTH
@@ -315,6 +320,7 @@ extern "C" {
    * @return -1 on error, 0 else (see errno for more details).
    */
   int essl_sha1_do_hash_file(const char* filename, essl_sha1_string_t output);
+#endif /* OPENSSL_NO_SHA1 */
 
 #ifdef __cplusplus
 }
