@@ -38,10 +38,24 @@
 #include <stdio.h>
 #include <essl.h>
 #include <math.h>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/buffer.h>
+#ifndef OPENSSL_NO_BIO
+  #include <openssl/bio.h>
+#endif /* OPENSSL_NO_BIO */
+#ifndef OPENSSL_NO_EVP
+  #include <openssl/evp.h>
+#endif /* OPENSSL_NO_EVP */
+#ifndef OPENSSL_NO_HMAC
+  #include <openssl/hmac.h>
+#endif /* OPENSSL_NO_HMAC */
+#ifndef OPENSSL_NO_BUFFER
+  #include <openssl/buffer.h>
+#endif /* OPENSSL_NO_BUFFER */
+#ifndef OPENSSL_NO_SSL2
+  #include <openssl/ssl.h>
+#endif /* OPENSSL_NO_SSL2 */
+#ifndef OPENSSL_NO_ERR
+  #include <openssl/err.h>
+#endif /* OPENSSL_NO_ERR */
 
 /****************************************************
  * ________          _____.__                                 
@@ -56,6 +70,7 @@
  * @brief The default buffer length used by the API.
  */
 #define ESSL_DEFAULT_BUFFER_LENGTH 1024
+
 
 /*****************************************************
  *    _____  ________   ________  
@@ -174,6 +189,7 @@ int essl_md4_do_hash_file(const char* filename, essl_md4_digest_t result) {
 }
 #endif /* OPENSSL_NO_MD4 */
 
+
 /*****************************************************
  *    _____  ________   .________
  *   /     \ \______ \  |   ____/
@@ -231,6 +247,7 @@ int essl_md5_do_hash_file(const char* filename, essl_md5_digest_t result) {
   return 0;
 }
 #endif /* OPENSSL_NO_MD5 */
+
 
 /*****************************************************
  * __________    _____    ____________________   ________   _____  
@@ -405,3 +422,235 @@ int essl_sha1_do_hash_file(const char* filename, essl_sha1_string_t output) {
   return 0;
 }
 #endif /* OPENSSL_NO_SHA */
+
+
+/*****************************************************
+ *   _________________  _________  ____  __.______________________
+ *  /   _____/\_____  \ \_   ___ \|    |/ _|\_   _____/\__    ___/
+ *  \_____  \  /   |   \/    \  \/|      <   |    __)_   |    |
+ *  /        \/    |    \     \___|    |  \  |        \  |    |
+ * /_______  /\_______  /\______  /____|__ \/_______  /  |____|
+ *         \/         \/        \/        \/        \/
+ *****************************************************/
+
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
+  
+unsigned long essl_errno = 0;
+
+struct essl_context_ssl_s {
+  SSL_CTX *ctx;
+  SSL     *ssl;
+};
+
+#ifndef OPENSSL_NO_ERR
+#define essl_update_errno() essl_errno = ERR_get_error()
+#else
+#define essl_update_errno() essl_errno = 0
+#endif /* OPENSSL_NO_ERR */
+
+/**
+ * @fn int essl_initialize_ssl(void)
+ * @brief Initialize the SSL stack, should be called only once in your application.
+ * @return -1 if the initialization fail, 0 else.
+ */
+int essl_initialize_ssl(void) {
+  OpenSSL_add_all_algorithms();
+  ERR_load_BIO_strings();
+  ERR_load_crypto_strings();
+  SSL_load_error_strings();
+  if(SSL_library_init() < 0) {
+    essl_update_errno();
+    essl_release_ssl();
+    return -1;
+  }
+  return 0;
+}
+/**
+ * @fn void essl_initialize_ssl(void)
+ * @brief Release the SSL stack, should be called only once in your application.
+ */
+void essl_release_ssl(void) {
+  ERR_free_strings();
+  EVP_cleanup();
+}
+
+/**
+ * @fn const char* essl_strerror_ssl(void)
+ * @brief Get the string representation of the essl_errno value in a static buffer.
+ * @return NULL if OPENSSL_NO_ERR is defined else the string error.
+ */
+const char* essl_strerror_ssl(void) {
+#ifndef OPENSSL_NO_ERR
+  return ERR_error_string(essl_errno, NULL);
+#else
+  return NULL;
+#endif /* OPENSSL_NO_ERR */
+}
+
+/**
+ * @fn static int essl_dumb_callback(int preverify_ok, X509_STORE_CTX *ctx)
+ * @brief Dumb callback used by the SSL_CTX_set_verify function.
+ * @param preverify_ok preverify ok.
+ * @param ctx X509 store context.
+ * @return 1 to continue.
+ */
+static int essl_dumb_callback(int preverify_ok, X509_STORE_CTX *ctx) {
+  (void)preverify_ok;
+  (void)ctx;
+  return 1;
+}
+
+/**
+ * @fn void essl_close_ssl(essl_socket_t essl)
+ * @brief Close the resources allocated by the connect/accept functions (does not close the user FD).
+ * @param essl The context to close.
+ */
+void essl_close_ssl(essl_socket_t essl) {
+  struct essl_context_ssl_s *e = (struct essl_context_ssl_s*)essl;
+  if(e) {
+    if(e->ssl) {
+      SSL_shutdown(e->ssl);
+      SSL_free(e->ssl);
+      e->ssl = NULL;
+    }
+    if(e->ctx) {
+      SSL_CTX_free(e->ctx);
+      e->ctx = NULL;
+    }
+    free(e);
+  }
+}
+
+/**
+ * @fn static essl_socket_t essl_connect_or_accept_ssl(int fd, int accept)
+ * @brief Bind an suer socket fd to the SSL context.
+ * @param fd The user FD to bind.
+ * @param accept 0 for connect method, 1 for accept method.
+ * @return NULL on error, else the SSL context.
+ */
+static essl_socket_t essl_connect_or_accept_ssl(int fd, int accept) {  
+  struct essl_context_ssl_s *essl = NULL;
+  
+  if((essl = malloc(sizeof(struct essl_context_ssl_s))) == NULL) {
+    essl_errno = ERR_R_MALLOC_FAILURE;
+    return NULL;
+  }
+  
+  /* We first need to establish what sort of */
+  /* connection we know how to make. We can use one of */
+  /* SSLv23_client_method(), SSLv2_client_method() and */
+  /* SSLv3_client_method(). */
+  /*  Try to create a new SSL context. */
+  if((essl->ctx = SSL_CTX_new(SSLv23_client_method())) == NULL) {
+    essl_update_errno();
+    free(essl);
+    return NULL;
+  }
+
+  /* Set it up so tha we will connect to *any* site, regardless of their certificate. */
+  SSL_CTX_set_verify(essl->ctx, SSL_VERIFY_NONE, essl_dumb_callback);
+  /* Enable bug support hacks. */
+  SSL_CTX_set_options(essl->ctx, SSL_OP_ALL);
+
+  /* Create new SSL connection state object. */
+  essl->ssl = SSL_new(essl->ctx);
+  if(essl->ssl == NULL) {
+    essl_update_errno();
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
+  }
+  /* Attach the SSL session. */
+  SSL_set_fd(essl->ssl, fd);
+  if(!accept) {
+    /* Connect using the SSL session. */
+    if(SSL_connect(essl->ssl) != 1) {
+      essl_update_errno();
+      SSL_shutdown(essl->ssl);
+      SSL_free(essl->ssl);
+      SSL_CTX_free(essl->ctx);
+      free(essl);
+      return NULL;
+    }
+  } else {
+    /* Accept using the SSL session. */
+    if(SSL_accept(essl->ssl) != 1) {
+      essl_update_errno();
+      SSL_shutdown(essl->ssl);
+      SSL_free(essl->ssl);
+      SSL_CTX_free(essl->ctx);
+      free(essl);
+      return NULL;
+    }
+  }
+  return essl;
+}
+
+/**
+ * @fn essl_socket_t essl_connect_ssl(int fd)
+ * @brief Bind an suer socket fd to the SSL context.
+ * @param fd The user FD to bind.
+ * @return NULL on error, else the SSL context.
+ */
+essl_socket_t essl_connect_ssl(int fd) {
+  return essl_connect_or_accept_ssl(fd, 0);
+}
+
+/**
+ * @fn essl_socket_t essl_accept_ssl(int fd)
+ * @brief Bind an user socket fd to the SSL context.
+ * @param fd The user FD to bind.
+ * @return NULL on error, else the SSL context.
+ */
+essl_socket_t essl_accept_ssl(int fd) {
+  return essl_connect_or_accept_ssl(fd, 1);
+}
+
+/**
+ * @fn int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length)
+ * @brief Write a buffer into the specified ssl connection.
+ * @param essl The SSL context.
+ * @param buffer The buffer to write.
+ * @param length The buffer length.
+ * @return 
+ * >0 The write operation was successful, the return value is the number of bytes actually written to the TLS/SSL connection.
+ * =0 The write operation was not successful. Probably the underlying connection was closed. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
+ * <0 The write operation was not successful, because either an error occurred or action must be taken by the calling process. See essl_errno to find out the reason.
+*/
+int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length) {
+  int r;
+  struct essl_context_ssl_s *e = (struct essl_context_ssl_s*)essl;
+  if(!e) {
+    essl_errno = ERR_R_PASSED_NULL_PARAMETER;
+    return -1;
+  }
+  r = SSL_write(e->ssl, buffer, length);
+  if(r < 0) essl_errno = r;
+  return r;
+}
+
+/**
+ * @fn int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length)
+ * @brief Read a buffer from the specified ssl connection.
+ * @param essl The SSL context.
+ * @param buffer The buffer to read.
+ * @param length The buffer length.
+ * @return 
+ * >0 The read operation was successful; the return value is the number of bytes actually read from the TLS/SSL connection.
+ * =0 The read operation was not successful. The reason may either be a clean shutdown due to a "close notify" alert sent by the peer (in which case the SSL_RECEIVED_SHUTDOWN flag in the ssl shutdown state is set (see SSL_shutdown, SSL_set_shutdown). It is also possible, that the peer simply shut down the underlying transport and the shutdown is incomplete. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
+ * <0 The read operation was not successful, because either an error occurred or action must be taken by the calling process. See essl_errno to find out the reason.
+*/
+int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length) {
+  int r;
+  struct essl_context_ssl_s *e = (struct essl_context_ssl_s*)essl;
+  if(!e) {
+    essl_errno = ERR_R_PASSED_NULL_PARAMETER;
+    return -1;
+  }
+  r = SSL_read(e->ssl, buffer, length);
+  if(r < 0) essl_errno = r;
+  return r;
+}
+
+#endif /* OPENSSL_NO_SSL2 && OPENSSL_NO_BIO */
+

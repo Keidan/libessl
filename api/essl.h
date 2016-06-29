@@ -108,6 +108,7 @@ extern "C" {
   int essl_md2_do_hash_file(const char* filename, essl_md2_digest_t result);
 #endif /* OPENSSL_NO_MD2 */
 
+
   /*****************************************************
    *    _____  ________      _____  
    *   /     \ \______ \    /  |  | 
@@ -170,6 +171,7 @@ extern "C" {
   int essl_md4_do_hash_file(const char* filename, essl_md4_digest_t result);
 #endif /* OPENSSL_NO_MD4 */
 
+
   /*****************************************************
    *    _____  ________   .________
    *   /     \ \______ \  |   ____/
@@ -231,6 +233,7 @@ extern "C" {
    */
   int essl_md5_do_hash_file(const char* filename, essl_md5_digest_t result);
 #endif /* OPENSSL_NO_MD5 */
+
 
   /*****************************************************
    * __________    _____    ____________________   ________   _____  
@@ -321,6 +324,96 @@ extern "C" {
    */
   int essl_sha1_do_hash_file(const char* filename, essl_sha1_string_t output);
 #endif /* OPENSSL_NO_SHA1 */
+
+
+  /*****************************************************
+   *   _________________  _________  ____  __.______________________
+   *  /   _____/\_____  \ \_   ___ \|    |/ _|\_   _____/\__    ___/
+   *  \_____  \  /   |   \/    \  \/|      <   |    __)_   |    |
+   *  /        \/    |    \     \___|    |  \  |        \  |    |
+   * /_______  /\_______  /\______  /____|__ \/_______  /  |____|
+   *         \/         \/        \/        \/        \/
+   *****************************************************/
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
+
+  extern unsigned long essl_errno;
+  
+  /**
+   * @typedef essl_socket_t
+   * @brief Socket context.
+   */
+  typedef void* essl_socket_t;
+  
+  /**
+   * @fn int essl_initialize_ssl(void)
+   * @brief Initialize the SSL stack, should be called only once in your application.
+   * @return -1 if the initialization fail, 0 else.
+   */
+  int essl_initialize_ssl(void);
+  
+  /**
+   * @fn void essl_initialize_ssl(void)
+   * @brief Release the SSL stack, should be called only once in your application.
+   */
+  void essl_release_ssl(void);
+  
+  /**
+   * @fn const char* essl_strerror_ssl(void)
+   * @brief Get the string representation of the essl_errno value in a static buffer.
+   * @return NULL if OPENSSL_NO_ERR is defined else the string error.
+   */
+  const char* essl_strerror_ssl(void);
+  
+  /**
+   * @fn essl_socket_t essl_connect_ssl(int fd)
+   * @brief Bind an suer socket fd to the SSL context.
+  * @param fd The user FD to bind.
+   * @return NULL on error, else the SSL context.
+   */
+  essl_socket_t essl_connect_ssl(int fd);
+
+  /**
+   * @fn essl_socket_t essl_accept_ssl(int fd)
+   * @brief Bind an user socket fd to the SSL context.
+   * @param fd The user FD to bind.
+   * @return NULL on error, else the SSL context.
+   */
+  essl_socket_t essl_accept_ssl(int fd);
+
+  /**
+   * @fn void essl_close_ssl(essl_socket_t essl)
+   * @brief Close the resources allocated by the connect/accept function (does not close the user FD).
+   * @param essl The context to close.
+   */
+  void essl_close_ssl(essl_socket_t essl);
+  
+  /**
+   * @fn int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length)
+   * @brief Write a buffer into the specified ssl connection.
+   * @param essl The SSL context.
+   * @param buffer The buffer to write.
+   * @param length The buffer length.
+   * @return 
+   * >0 The write operation was successful, the return value is the number of bytes actually written to the TLS/SSL connection.
+   * =0 The write operation was not successful. Probably the underlying connection was closed. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
+   * <0 The write operation was not successful, because either an error occurred or action must be taken by the calling process. See essl_errno to find out the reason.
+   */
+  int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length);
+
+  /**
+   * @fn int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length)
+   * @brief Read a buffer from the specified ssl connection.
+   * @param essl The SSL context.
+   * @param buffer The buffer to read.
+   * @param length The buffer length.
+   * @return 
+   * >0 The read operation was successful; the return value is the number of bytes actually read from the TLS/SSL connection.
+   * =0 The read operation was not successful. The reason may either be a clean shutdown due to a "close notify" alert sent by the peer (in which case the SSL_RECEIVED_SHUTDOWN flag in the ssl shutdown state is set (see SSL_shutdown, SSL_set_shutdown). It is also possible, that the peer simply shut down the underlying transport and the shutdown is incomplete. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
+   * <0 The read operation was not successful, because either an error occurred or action must be taken by the calling process. See essl_errno to find out the reason.
+   */
+  int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length);
+  
+#endif /* OPENSSL_NO_SSL2 && OPENSSL_NO_BIO */
 
 #ifdef __cplusplus
 }
