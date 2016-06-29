@@ -11,6 +11,7 @@ This library aims to simplify the use of some functions proposed by OpenSSL:
 	MD4 hash (strings, stream, files)
 	MD5 hash (strings, stream, files)
 	SHA1 hash (strings, stream, files)
+	SSL socket (connect/accept)
 	Etc ... See the demo applications for the list of supported modules.
 
 To build this library you should have installed the OpenSSL devel package
