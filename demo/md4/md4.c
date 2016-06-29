@@ -4,6 +4,7 @@
 
 int main(int argc, char** argv) {
 
+#ifndef OPENSSL_NO_MD4
   const char* str = "Hello world";
   essl_md4_digest_t res;
   essl_md4_string_t mds;
@@ -17,6 +18,9 @@ int main(int argc, char** argv) {
 
   essl_md4_digest_to_string(res, mds);
   printf("%s: '%s'\n", str, mds);
+#else
+  printf("MD4 not supported\n");
+#endif /* OPENSSL_NO_MD4 */
 
   return 0;
 }
