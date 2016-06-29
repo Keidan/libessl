@@ -124,6 +124,7 @@ int essl_md2_do_hash_file(const char* filename, essl_md5_digest_t result) {
  * \____|__  /_______  /\____   | 
  *         \/        \/      |__| 
  *****************************************************/
+#ifndef OPENSSL_NO_MD4
 /**
  * @fn void essl_md4_do_hash(const char* str, size_t length, essl_md4_digest_t result) 
  * @brief Generate a MD4 digest
@@ -171,7 +172,7 @@ int essl_md4_do_hash_file(const char* filename, essl_md4_digest_t result) {
   errno = 0;
   return 0;
 }
-
+#endif /* OPENSSL_NO_MD4 */
 
 /*****************************************************
  *    _____  ________   .________
@@ -181,6 +182,7 @@ int essl_md4_do_hash_file(const char* filename, essl_md4_digest_t result) {
  * \____|__  /_______  /______  /
  *         \/        \/       \/                                  
  *****************************************************/
+#ifndef OPENSSL_NO_MD5
 /**
  * @fn void essl_md5_do_hash(const char* str, size_t length, essl_md5_digest_t result) 
  * @brief Generate a MD5 digest
@@ -228,7 +230,7 @@ int essl_md5_do_hash_file(const char* filename, essl_md5_digest_t result) {
   errno = 0;
   return 0;
 }
-
+#endif /* OPENSSL_NO_MD5 */
 
 /*****************************************************
  * __________    _____    ____________________   ________   _____  
@@ -238,6 +240,7 @@ int essl_md5_do_hash_file(const char* filename, essl_md5_digest_t result) {
  *  |______  /\____|__  /_______  //_______  /  \_____  /\____   | 
  *         \/         \/        \/         \/         \/      |__| 
  *****************************************************/
+#ifndef OPENSSL_NO_BIO
 /**
  * @fn int essl_base64_encode(const char *input, const size_t ilength, char** output, size_t *olength)
  * @brief Encode a paln text to a base64 representation.
@@ -333,6 +336,7 @@ size_t essl_base64_adjust_decode_length(const char *input, const size_t ilength)
     padding = 1;
   return ilength*0.75 - padding;
 }
+#endif /* OPENSSL_NO_BIO */
 
 
 /*****************************************************
@@ -343,6 +347,7 @@ size_t essl_base64_adjust_decode_length(const char *input, const size_t ilength)
  * /_______  /\___|_  /\____|__  /___|
  *         \/       \/         \/     
  *****************************************************/
+#ifndef OPENSSL_NO_SHA1
 /**
  * @fn int essl_sha1_do_hash(const char* input, size_t ilength, essl_sha1_string_t output)
  * @brief Calculate a SHA1 for a specified string.
@@ -399,3 +404,4 @@ int essl_sha1_do_hash_file(const char* filename, essl_sha1_string_t output) {
     sprintf(output + j, "%02x", buffer[i]);
   return 0;
 }
+#endif /* OPENSSL_NO_SHA */
