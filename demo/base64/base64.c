@@ -14,6 +14,7 @@
 
 int main(int argc, char** argv) {
 
+#ifndef OPENSSL_NO_BIO
   const char* str = "Hello world";
   char* output = NULL;
   char* output2 = NULL;
@@ -33,5 +34,8 @@ int main(int argc, char** argv) {
 
   free(output2);
   free(output);
+#else
+  printf("Base64 not supported\n");
+#endif /* OPENSSL_NO_BIO */
   return 0;
 }
