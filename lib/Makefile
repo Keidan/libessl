@@ -1,15 +1,15 @@
-SRC                     = essl.c
-OBJ                     = $(SRC:.c=.o)
-INSTALL                 = ../deploy/$(shell uname -m)
-LIB	    		= libessl.so
-CC         		= gcc
-FLAGS             	= -Wall -W -pedantic -fPIC
-DEBUG_FLAGS             = -g -O0
-INC_FLAGS               = -I$(PWD)/../api
+SRC						= essl.c
+OBJ						= $(SRC:.c=.o)
+INSTALL				= ../deploy/$(shell uname -m)
+LIB						= libessl.so
+CC						= gcc
+FLAGS					= -Wl,-z,relro,-z,now -fstack-protector-all -D_FORTIFY_SOURCE=2 -ffunction-sections -Wall -W -pedantic -fPIC
+DEBUG_FLAGS		= -g -O0
+INC_FLAGS			= -I$(PWD)/../api
 # Compiler
-CFLAGS = $(DEBUG_FLAGS) $(INC_FLAGS) $(FLAGS)
+CFLAGS				= $(DEBUG_FLAGS) $(INC_FLAGS) $(FLAGS)
 # Linker
-LDFLAGS = -lssl -lcrypto -lm
+LDFLAGS				= -lssl -lcrypto -lm
 
 .SUFFIXES: .c
 
