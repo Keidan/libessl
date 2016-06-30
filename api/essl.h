@@ -295,13 +295,13 @@ extern "C" {
 
   /**
    **@def ESSL_SHA_HEX_DIGEST_LENGTH
-   * @bieff Length of the SHA1 digest
+   * @brief Length of the SHA1 digest
    */
   #define ESSL_SHA_HEX_DIGEST_LENGTH (ESSL_SHA_DIGEST_LENGTH*2)
 
   /**
    **@typedef essl_sha1_string_t
-   * @bieff Length of the SHA1 digest
+   * @brief Length of the SHA1 digest
    */
   typedef char essl_sha1_string_t[ESSL_SHA_HEX_DIGEST_LENGTH + 1];
 
@@ -344,6 +344,26 @@ extern "C" {
    */
   typedef void* essl_socket_t;
   
+  
+  /**
+   * @enum essl_file_type_et
+   * @brief Enum used to define the specified file type.
+   */
+  typedef enum { 
+    ESSL_FILE_TYPE_ASN1 = 0, /**< File type ASN1 */
+    ESSL_FILE_TYPE_PEM  = 1  /**< File type PEM */
+  } essl_file_type_et;
+  
+  /**
+   * @struct essl_file_s
+   * @brief Specifying the certificate to use for the server part.
+   */
+  struct essl_file_s {
+    essl_file_type_et type; /**< The file type. */
+    char*             path; /**< The file path. */
+  };
+  
+  
   /**
    * @fn int essl_initialize_ssl(void)
    * @brief Initialize the SSL stack, should be called only once in your application.
@@ -376,9 +396,11 @@ extern "C" {
    * @fn essl_socket_t essl_accept_ssl(int fd)
    * @brief Bind an user socket fd to the SSL context.
    * @param fd The user FD to bind.
+   * @param cert The certificate file to use.
+   * @param private_key The private key file.
    * @return NULL on error, else the SSL context.
    */
-  essl_socket_t essl_accept_ssl(int fd);
+  essl_socket_t essl_accept_ssl(int fd, const struct essl_file_s cert, const struct essl_file_s private_key);
 
   /**
    * @fn void essl_close_ssl(essl_socket_t essl)

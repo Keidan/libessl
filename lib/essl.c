@@ -522,17 +522,16 @@ void essl_close_ssl(essl_socket_t essl) {
 }
 
 /**
- * @fn static essl_socket_t essl_connect_or_accept_ssl(int fd, int accept)
+ * @fn essl_socket_t essl_connect_ssl(int fd)
  * @brief Bind an suer socket fd to the SSL context.
  * @param fd The user FD to bind.
- * @param accept 0 for connect method, 1 for accept method.
  * @return NULL on error, else the SSL context.
  */
-static essl_socket_t essl_connect_or_accept_ssl(int fd, int accept) {  
+essl_socket_t essl_connect_ssl(int fd) {
   struct essl_context_ssl_s *essl = NULL;
   
   if((essl = malloc(sizeof(struct essl_context_ssl_s))) == NULL) {
-    essl_errno = ERR_R_MALLOC_FAILURE;
+    essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_CONNECT, ERR_R_MALLOC_FAILURE);
     return NULL;
   }
   
@@ -560,50 +559,112 @@ static essl_socket_t essl_connect_or_accept_ssl(int fd, int accept) {
     free(essl);
     return NULL;
   }
+  
   /* Attach the SSL session. */
   SSL_set_fd(essl->ssl, fd);
-  if(!accept) {
-    /* Connect using the SSL session. */
-    if(SSL_connect(essl->ssl) != 1) {
-      essl_update_errno();
-      SSL_shutdown(essl->ssl);
-      SSL_free(essl->ssl);
-      SSL_CTX_free(essl->ctx);
-      free(essl);
-      return NULL;
-    }
-  } else {
-    /* Accept using the SSL session. */
-    if(SSL_accept(essl->ssl) != 1) {
-      essl_update_errno();
-      SSL_shutdown(essl->ssl);
-      SSL_free(essl->ssl);
-      SSL_CTX_free(essl->ctx);
-      free(essl);
-      return NULL;
-    }
+  /* Connect using the SSL session. */
+  if(SSL_connect(essl->ssl) != 1) {
+    essl_update_errno();
+    if(essl_errno == 0) essl_errno = ERR_PACK(ERR_LIB_SYS, SYS_F_CONNECT, ERR_R_SYS_LIB);
+    SSL_shutdown(essl->ssl);
+    SSL_free(essl->ssl);
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
   }
   return essl;
-}
-
-/**
- * @fn essl_socket_t essl_connect_ssl(int fd)
- * @brief Bind an suer socket fd to the SSL context.
- * @param fd The user FD to bind.
- * @return NULL on error, else the SSL context.
- */
-essl_socket_t essl_connect_ssl(int fd) {
-  return essl_connect_or_accept_ssl(fd, 0);
 }
 
 /**
  * @fn essl_socket_t essl_accept_ssl(int fd)
  * @brief Bind an user socket fd to the SSL context.
  * @param fd The user FD to bind.
+ * @param cert The certificate file to use.
+ * @param private_key The private key file.
  * @return NULL on error, else the SSL context.
  */
-essl_socket_t essl_accept_ssl(int fd) {
-  return essl_connect_or_accept_ssl(fd, 1);
+essl_socket_t essl_accept_ssl(int fd, const struct essl_file_s cert, const struct essl_file_s private_key) {
+  struct essl_context_ssl_s *essl = NULL;
+  
+  if((essl = malloc(sizeof(struct essl_context_ssl_s))) == NULL) {
+    essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_CONNECT, ERR_R_MALLOC_FAILURE);
+    return NULL;
+  }
+  
+  /* We first need to establish what sort of */
+  /* connection we know how to make. We can use one of */
+  /* SSLv23_method(), SSLv2_method() and */
+  /* SSLv3_method(). */
+  /*  Try to create a new SSL context. */
+  if((essl->ctx = SSL_CTX_new(SSLv23_method())) == NULL) {
+    essl_update_errno();
+    free(essl);
+    return NULL;
+  }
+  /* Prevent small subgroup attacks */
+  SSL_CTX_set_options(essl->ctx, SSL_OP_SINGLE_DH_USE);
+  /* Force openssl to use the user certs */ 
+  if (SSL_CTX_load_verify_locations(essl->ctx, cert.path, private_key.path) != 1) {
+    essl_update_errno();
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
+  }
+  if (SSL_CTX_set_default_verify_paths(essl->ctx) != 1) {
+    essl_update_errno();
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
+  }
+  
+  /* Use the proper cert file */
+  if(SSL_CTX_use_certificate_file(essl->ctx, cert.path, cert.type == ESSL_FILE_TYPE_ASN1 ? SSL_FILETYPE_ASN1 : SSL_FILETYPE_PEM) <= 0) {
+    essl_update_errno();
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
+  }
+  
+  /* Use the proper private key file */
+  if(SSL_CTX_use_PrivateKey_file(essl->ctx, private_key.path, private_key.type == ESSL_FILE_TYPE_ASN1 ? SSL_FILETYPE_ASN1 : SSL_FILETYPE_PEM) <= 0) {
+    essl_update_errno();
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
+  }
+  
+  /* verify private key */
+  if (!SSL_CTX_check_private_key(essl->ctx)) {
+    essl_update_errno();
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
+  }
+
+  /* Create new SSL connection state object. */
+  essl->ssl = SSL_new(essl->ctx);
+  if(essl->ssl == NULL) {
+    essl_update_errno();
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
+  }
+  
+  /* Attach the SSL session. */
+  SSL_set_fd(essl->ssl, fd);
+  
+  /* Connect using the SSL session. */
+  if(SSL_accept(essl->ssl) != 1) {
+    essl_update_errno();
+    if(essl_errno == 0) essl_errno = ERR_PACK(ERR_LIB_SYS, SYS_F_ACCEPT, ERR_R_SYS_LIB);
+    SSL_shutdown(essl->ssl);
+    SSL_free(essl->ssl);
+    SSL_CTX_free(essl->ctx);
+    free(essl);
+    return NULL;
+  }
+  
+  return essl;
 }
 
 /**
