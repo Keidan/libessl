@@ -71,6 +71,7 @@ int main(int argc, char** argv) {
   }
   essl_close_ssl(essl);
   close(fd);
+  essl_release_ssl();
 #else
   printf("SSL and BIO are not supported\n");
 #endif /* OPENSSL_NO_SSL2 && OPENSSL_NO_BIO */
