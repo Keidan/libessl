@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
   } 
   
   /* Look up the remote host to get its network number. */
-	if ((remoteh = gethostbyname(argc > 1 ? argv[1] : "www.google.com")) == NULL) {
+	if ((remoteh = gethostbyname(argc > 1 ? argv[1] : "127.0.0.1")) == NULL) {
     perror("connect");
     essl_release_ssl();
     close(fd);
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
     status = essl_read_ssl(essl, readdata, 1024);
 	  if ( status == 0 ) break;
 	  if ( status <  0 ) { sleep(1); continue; }
-	  fprintf(stdout, "%s", readdata);
+	  fprintf(stdout, "%s\n", readdata);
   }
   essl_close_ssl(essl);
   close(fd);
