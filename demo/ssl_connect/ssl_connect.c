@@ -36,6 +36,7 @@ int main(int argc, char** argv) {
 	if ((remoteh = gethostbyname(argc > 1 ? argv[1] : "www.google.com")) == NULL) {
     perror("connect");
     essl_release_ssl();
+    close(fd);
 	  exit(1);
 	}
 
@@ -47,6 +48,7 @@ int main(int argc, char** argv) {
   if (!(connect(fd, (struct sockaddr *)(&address), sizeof(address)) >= 0)) {
     perror("connect");
     essl_release_ssl();
+    close(fd);
 	  exit(1);
 	}
   
@@ -54,6 +56,7 @@ int main(int argc, char** argv) {
   if(essl == NULL) {
     fprintf(stderr, "Error: %s\n", essl_strerror_ssl());
     essl_release_ssl();
+    close(fd);
     exit(1);
   }
   
