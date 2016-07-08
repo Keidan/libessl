@@ -17,6 +17,8 @@ int main(int argc, char** argv) {
   essl_socket_t essl;
   char readdata[1024];
   
+  sleep(5); /* wait forthecertificate generation */
+  
   if(essl_initialize_ssl() != 0) {
     fprintf(stderr, "Error: %s\n", essl_strerror_ssl());
     essl_release_ssl();
