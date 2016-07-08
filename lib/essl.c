@@ -682,7 +682,7 @@ int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length) {
   int r;
   struct essl_context_ssl_s *e = (struct essl_context_ssl_s*)essl;
   if(!e) {
-    essl_errno = ERR_R_PASSED_NULL_PARAMETER;
+    essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_FREAD, ERR_R_PASSED_NULL_PARAMETER);
     return -1;
   }
   r = SSL_write(e->ssl, buffer, length);
@@ -705,13 +705,15 @@ int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length) {
   int r;
   struct essl_context_ssl_s *e = (struct essl_context_ssl_s*)essl;
   if(!e) {
-    essl_errno = ERR_R_PASSED_NULL_PARAMETER;
+    essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_FREAD, ERR_R_PASSED_NULL_PARAMETER);
     return -1;
   }
   r = SSL_read(e->ssl, buffer, length);
   if(r < 0) essl_errno = r;
   return r;
 }
+
+
 
 #endif /* OPENSSL_NO_SSL2 && OPENSSL_NO_BIO */
 
