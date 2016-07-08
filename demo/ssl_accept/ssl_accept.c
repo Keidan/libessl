@@ -41,6 +41,12 @@ int main(int argc, char** argv) {
   (void)argc;
   (void)argv;
   
+  i = system("/bin/bash ./generate_cert.sh");
+  if(i != 0) {
+    fprintf(stderr, "Unable to generate the certificates: (%d) %s\n", errno,strerror(errno));
+    exit(1);
+  }
+  
   /* sigint + sigterm registration */
   memset(&sa, 0, sizeof(struct sigaction));
   sa.sa_handler = sig_callback;
