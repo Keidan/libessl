@@ -24,7 +24,7 @@ void sig_callback(int sig);
 #endif /* OPENSSL_NO_SSL2 && OPENSSL_NO_BIO */
 
 int main(int argc, char** argv) {
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
+#if defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_BIO)
   struct sigaction sa;
   int i, max, reuse, activity, client, addrlen, sd, status;
   int clients[SOCKET_MAX_CONNECTIONS];
@@ -175,7 +175,7 @@ int main(int argc, char** argv) {
   return 0;
 }
 
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
+#if defined(OPENSSL_NO_SSL2) && !efined(OPENSSL_NO_BIO)
 
 void sig_callback(int sig) {
   (void)sig;
