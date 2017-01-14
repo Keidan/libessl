@@ -16,7 +16,7 @@
 #define PORT 443
 #define BUFFER_LENGTH 1024
 
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
+#if defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_BIO)
 static char leave = 0;
 static int fd;
 
