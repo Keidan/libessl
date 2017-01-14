@@ -334,7 +334,7 @@ extern "C" {
    * /_______  /\_______  /\______  /____|__ \/_______  /  |____|
    *         \/         \/        \/        \/        \/
    *****************************************************/
-#if defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_BIO)
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
 
   extern unsigned long essl_errno;
   

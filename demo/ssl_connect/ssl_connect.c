@@ -10,7 +10,7 @@
 #include <errno.h>
 
 int main(int argc, char** argv) {
-#if defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_BIO)
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
   struct hostent *remoteh;
   struct sockaddr_in address;
   int fd, result, status;
