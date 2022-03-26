@@ -21,10 +21,10 @@ int main(int argc, char** argv)
   
   sleep(5); /* wait forthecertificate generation */
   
-  if(essl_initialize_ssl() != 0)
+  if(essl_socket_initialize() != 0)
   {
-    fprintf(stderr, "Error: %s\n", essl_strerror_ssl());
-    essl_release_ssl();
+    fprintf(stderr, "Error: %s\n", essl_strerror());
+    essl_socket_release();
     exit(1);
   }
   
@@ -34,7 +34,7 @@ int main(int argc, char** argv)
   if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
   {
     perror( "connect: cannot create socket" );
-    essl_release_ssl();
+    essl_socket_release();
     exit(1);
   } 
   
@@ -42,7 +42,7 @@ int main(int argc, char** argv)
   if ((remoteh = gethostbyname(argc > 1 ? argv[1] : "127.0.0.1")) == NULL)
   {
     perror("connect");
-    essl_release_ssl();
+    essl_socket_release();
     close(fd);
     exit(1);
   }
@@ -55,28 +55,28 @@ int main(int argc, char** argv)
   if (!(connect(fd, (struct sockaddr *)(&address), sizeof(address)) >= 0))
   {
     perror("connect");
-    essl_release_ssl();
+    essl_socket_release();
     close(fd);
     exit(1);
   }
   
-  essl = essl_connect_ssl(fd);
+  essl = essl_socket_connect(fd);
   if(essl == NULL) {
-    fprintf(stderr, "Error: %s\n", essl_strerror_ssl());
-    essl_release_ssl();
+    fprintf(stderr, "Error: %s\n", essl_strerror());
+    essl_socket_release();
     close(fd);
     exit(1);
   }
   
   /* Send the request */
   strcpy(readdata, "GET /\r\n");
-  essl_write_ssl(essl, readdata, strlen(readdata));
+  essl_socket_write(essl, readdata, strlen(readdata));
   /* wait a second for processing. */
   sleep(1);
   bzero(readdata, 1024);
   while (1)
   {
-    status = essl_read_ssl(essl, readdata, 1024);
+    status = essl_socket_read(essl, readdata, 1024);
     if ( status == 0 )
       break;
     if ( status <  0 )
@@ -86,9 +86,9 @@ int main(int argc, char** argv)
     }
     fprintf(stdout, "%s\n", readdata);
   }
-  essl_close_ssl(essl);
+  essl_socket_close(essl);
   close(fd);
-  essl_release_ssl();
+  essl_socket_release();
 #else
   (void)argv;/* remove warning */
   printf("SSL socket not supported\n");

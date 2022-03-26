@@ -48,9 +48,9 @@ int main(int argc, char** argv)
   (void)sigaction(SIGINT, &sa, NULL);
   (void)sigaction(SIGTERM, &sa, NULL);
   
-  if(essl_initialize_ssl() != 0)
+  if(essl_socket_initialize() != 0)
   {
-    fprintf(stderr, "Error: %s\n", essl_strerror_ssl());
+    fprintf(stderr, "Error: %s\n", essl_strerror());
     exit(1);
   }
   
@@ -187,8 +187,8 @@ static char process_io(int* clients)
   int i, sd, status;
   fd_set readfds;
   essl_socket_t essl;
-  struct essl_file_s cert = { ESSL_FILE_TYPE_PEM, "./cert.pem"};
-  struct essl_file_s private_key = { ESSL_FILE_TYPE_PEM, "./key.pem"};
+  struct essl_socket_cert_s cert = { ESSL_SOCKET_CERT_TYPE_PEM, "./cert.pem"};
+  struct essl_socket_cert_s private_key = { ESSL_SOCKET_CERT_TYPE_PEM, "./key.pem"};
   char readdata[BUFFER_LENGTH];
   const char* page = "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\"></head><body>Hello from SSL accept</body></html>";
   char done = 0;
@@ -200,15 +200,15 @@ static char process_io(int* clients)
     {
       printf("for me\n");
       clients[i] = 0;
-      essl = essl_accept_ssl(sd, cert, private_key);
+      essl = essl_socket_accept(sd, cert, private_key);
       if(essl == NULL)
       {
-	fprintf(stderr, "Error: %s\n", essl_strerror_ssl());
+	fprintf(stderr, "Error: %s\n", essl_strerror());
 	close(sd);
 	break;
       }
       bzero(readdata, BUFFER_LENGTH);
-      status = essl_read_ssl(essl, readdata, BUFFER_LENGTH);
+      status = essl_socket_read(essl, readdata, BUFFER_LENGTH);
       if ( status == 0 )
 	printf("Status equals 0\n");
       else if ( status <  0 )
@@ -216,9 +216,9 @@ static char process_io(int* clients)
       else
       {
 	fprintf(stdout, "Message: '%s'", readdata);
-	essl_write_ssl(essl, page, strlen(page));
+	essl_socket_write(essl, page, strlen(page));
       }
-      essl_close_ssl(essl);
+      essl_socket_close(essl);
       close(sd);
       done = 1;
       break;
@@ -235,7 +235,7 @@ static void sig_callback(int sig) {
     close(fd);
     fd = 0;
   }
-  essl_release_ssl();
+  essl_socket_release();
 }
 
 #endif /* ESSL_SUPPORT_SOCKET */

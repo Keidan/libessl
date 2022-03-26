@@ -47,6 +47,25 @@ extern "C" {
   #include <errno.h>
   #include <openssl/opensslconf.h>
 
+  /*****************************************************
+   * _______________________________ ________ __________ 
+   * \_   _____/\______   \______   \\_____  \\______   \
+   *  |    __)_  |       _/|       _/ /   |   \|       _/
+   *  |        \ |    |   \|    |   \/    |    \    |   \
+   * /_______  / |____|_  /|____|_  /\_______  /____|_  /
+   *         \/         \/        \/         \/       \/        
+   *****************************************************/
+
+#ifndef OPENSSL_NO_ERR
+  #define ESSL_SUPPORT_ERROR
+#endif /* OPENSSL_NO_ERR */
+  
+  extern uint64_t essl_errno;
+  /**
+   * @brief Get the string representation of the essl_errno value in a static buffer.
+   * @return NULL if ESSL_SUPPORT_ERROR is not defined otherwise the string error.
+   */
+  const char* essl_strerror(void);
 
   /*****************************************************
    *    _____  ________   ________  
@@ -63,25 +82,21 @@ extern "C" {
   #define ESSL_SUPPORT_MD2
   
   /**
-   * @def ESSL_MD2_STRING_LENGTH
    * @brief The Hexa string length.
    */
   #define ESSL_MD2_STRING_LENGTH 33
 
   /**
-   * @def ESSL_MD2_DIGEST_LENGTH
    * @brief The length of the md2 digest.
    */
   #define ESSL_MD2_DIGEST_LENGTH MD2_DIGEST_LENGTH
 
   /**
-   * @typedef essl_md2_digest_t
    * @brief MD2 digest type.
    */
   typedef uint8_t essl_md2_digest_t[ESSL_MD2_DIGEST_LENGTH];
 
   /**
-   * @typedef essl_md2_string_t
    * @brief MD2 hexa string type.
    */
   typedef char essl_md2_string_t [ESSL_MD2_STRING_LENGTH];
@@ -125,25 +140,21 @@ extern "C" {
   #define ESSL_SUPPORT_MD4
   
   /**
-   * @def ESSL_MD4_STRING_LENGTH
    * @brief The Hexa string length.
    */
   #define ESSL_MD4_STRING_LENGTH 33
 
   /**
-   * @def ESSL_MD5_DIGEST_LENGTH
    * @brief The length of the md5 digest.
    */
   #define ESSL_MD4_DIGEST_LENGTH MD4_DIGEST_LENGTH
 
   /**
-   * @typedef essl_md4_digest_t
    * @brief MD4 digest type.
    */
   typedef uint8_t essl_md4_digest_t[ESSL_MD4_DIGEST_LENGTH];
 
   /**
-   * @typedef essl_md4_string_t
    * @brief MD4 hexa string type.
    */
   typedef char essl_md4_string_t [ESSL_MD4_STRING_LENGTH];
@@ -187,25 +198,21 @@ extern "C" {
   #define ESSL_SUPPORT_MD5
 
   /**
-   * @def ESSL_MD5_STRING_LENGTH
    * @brief The Hexa string length.
    */
   #define ESSL_MD5_STRING_LENGTH 33
 
   /**
-   * @def ESSL_MD5_DIGEST_LENGTH
    * @brief The length of the md5 digest.
    */
   #define ESSL_MD5_DIGEST_LENGTH MD5_DIGEST_LENGTH
 
   /**
-   * @typedef essl_md5_digest_t
    * @brief MD5 digest type.
    */
   typedef uint8_t essl_md5_digest_t[ESSL_MD5_DIGEST_LENGTH];
 
   /**
-   * @typedef essl_md5_string_t
    * @brief MD5 hexa string type.
    */
   typedef char essl_md5_string_t [ESSL_MD5_STRING_LENGTH];
@@ -291,20 +298,17 @@ extern "C" {
   #define ESSL_SUPPORT_SHA1
   
   /**
-   * @def SHA_DIGEST_LENGTH
    * @brief The length of the SHA digest.
    */
   #define ESSL_SHA_DIGEST_LENGTH SHA_DIGEST_LENGTH
 
   /**
-   **@def ESSL_SHA_HEX_DIGEST_LENGTH
-   * @brief Length of the SHA1 digest
+   * @brief Length of the SHA1 digest.
    */
   #define ESSL_SHA_HEX_DIGEST_LENGTH (ESSL_SHA_DIGEST_LENGTH*2)
 
   /**
-   **@typedef essl_sha1_string_t
-   * @brief Length of the SHA1 digest
+   * @brief Length of the SHA1 digest.
    */
   typedef char essl_sha1_string_t[ESSL_SHA_HEX_DIGEST_LENGTH + 1];
 
@@ -338,33 +342,28 @@ extern "C" {
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
 
   #define ESSL_SUPPORT_SOCKET
-
-  extern uint64_t essl_errno;
   
   /**
-   * @typedef essl_socket_t
    * @brief Socket context.
    */
   typedef void* essl_socket_t;
   
   
   /**
-   * @enum essl_file_type_et
    * @brief Enum used to define the specified file type.
    */
   typedef enum
   { 
-    ESSL_FILE_TYPE_ASN1 = 0, /**< File type ASN1 */
-    ESSL_FILE_TYPE_PEM  = 1  /**< File type PEM */
-  } essl_file_type_et;
+    ESSL_SOCKET_CERT_TYPE_ASN1 = 0, /**< File type ASN1 */
+    ESSL_SOCKET_CERT_TYPE_PEM  = 1  /**< File type PEM */
+  } essl_socket_cert_type_et;
   
   /**
-   * @struct essl_file_s
    * @brief Specifying the certificate to use for the server part.
    */
-  struct essl_file_s
+  struct essl_socket_cert_s
   {
-    essl_file_type_et type; /**< The file type. */
+    essl_socket_cert_type_et type; /**< The file type. */
     char* path; /**< The file path. */
   };
   
@@ -373,25 +372,19 @@ extern "C" {
    * @brief Initialize the SSL stack, should be called only once in your application.
    * @return -1 if the initialization fail, otherwise 0.
    */
-  int essl_initialize_ssl(void);
+  int essl_socket_initialize(void);
   
   /**
    * @brief Release the SSL stack, should be called only once in your application.
    */
-  void essl_release_ssl(void);
-  
-  /**
-   * @brief Get the string representation of the essl_errno value in a static buffer.
-   * @return NULL if OPENSSL_NO_ERR is defined else the string error.
-   */
-  const char* essl_strerror_ssl(void);
+  void essl_socket_release(void);
   
   /**
    * @brief Bind an suer socket fd to the SSL context.
    * @param[in] fd The user FD to bind.
    * @return NULL on error, otherwise the SSL context.
    */
-  essl_socket_t essl_connect_ssl(int fd);
+  essl_socket_t essl_socket_connect(int fd);
 
   /**
    * @brief Bind an user socket fd to the SSL context.
@@ -400,13 +393,13 @@ extern "C" {
    * @param[in] private_key The private key file.
    * @return NULL on error, otherwise the SSL context.
    */
-  essl_socket_t essl_accept_ssl(int fd, const struct essl_file_s cert, const struct essl_file_s private_key);
+  essl_socket_t essl_socket_accept(int fd, const struct essl_socket_cert_s cert, const struct essl_socket_cert_s private_key);
 
   /**
    * @brief Close the resources allocated by the connect/accept function (does not close the user FD).
    * @param[in,out] essl The context to close.
    */
-  void essl_close_ssl(essl_socket_t essl);
+  void essl_socket_close(essl_socket_t essl);
   
   /**
    * @brief Write a buffer into the specified ssl connection.
@@ -418,7 +411,7 @@ extern "C" {
    * =0 The write operation was not successful. Probably the underlying connection was closed. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
    * <0 The write operation was not successful, because either an error occurred or action must be taken by the calling process. See essl_errno to find out the reason.
    */
-  int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length);
+  int essl_socket_write(essl_socket_t essl, const void* buffer, size_t length);
 
   /**
    * @brief Read a buffer from the specified ssl connection.
@@ -430,7 +423,7 @@ extern "C" {
    * =0 The read operation was not successful. The reason may either be a clean shutdown due to a "close notify" alert sent by the peer (in which case the SSL_RECEIVED_SHUTDOWN flag in the ssl shutdown state is set (see SSL_shutdown, SSL_set_shutdown). It is also possible, that the peer simply shut down the underlying transport and the shutdown is incomplete. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
    * <0 The read operation was not successful, because either an error occurred or action must be taken by the calling process. See essl_errno to find out the reason.
    */
-  int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length);
+  int essl_socket_read(essl_socket_t essl, void* buffer, size_t length);
   
 #endif /* OPENSSL_NO_SSL2 && OPENSSL_NO_BIO */
 
@@ -447,13 +440,11 @@ extern "C" {
   #define ESSL_SUPPORT_AES
 
   /**
-   * @def ESSL_AES_COUNT
    * @brief The iteration count to use.
    */
   #define ESSL_AES_COUNT 5
   
   /**
-   * @def ESSL_AES_KEY_LEN
    * @brief The default key length.
    */
   #define ESSL_AES_KEY_LEN 32

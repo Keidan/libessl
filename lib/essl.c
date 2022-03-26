@@ -39,26 +39,26 @@
 #include <essl.h>
 #include <math.h>
 #ifndef OPENSSL_NO_BIO
-  #include <openssl/bio.h>
+#include <openssl/bio.h>
 #endif /* OPENSSL_NO_BIO */
 #ifndef OPENSSL_NO_EVP
-  #include <openssl/evp.h>
+#include <openssl/evp.h>
 #endif /* OPENSSL_NO_EVP */
 #ifndef OPENSSL_NO_HMAC
-  #include <openssl/hmac.h>
+#include <openssl/hmac.h>
 #endif /* OPENSSL_NO_HMAC */
 #ifndef OPENSSL_NO_BUFFER
-  #include <openssl/buffer.h>
+#include <openssl/buffer.h>
 #endif /* OPENSSL_NO_BUFFER */
 #ifndef OPENSSL_NO_SSL2
-  #include <openssl/ssl.h>
+#include <openssl/ssl.h>
 #endif /* OPENSSL_NO_SSL2 */
 #ifndef OPENSSL_NO_ERR
-  #include <openssl/err.h>
+#include <openssl/err.h>
 #endif /* OPENSSL_NO_ERR */
 #ifndef EVP_MD
-  #include <openssl/evp.h>
-  #include <openssl/aes.h>
+#include <openssl/evp.h>
+#include <openssl/aes.h>
 #endif /* EVP_MD */
 
 /****************************************************
@@ -75,6 +75,37 @@
  */
 #define ESSL_DEFAULT_BUFFER_LENGTH 1024
 
+
+
+/*****************************************************
+ * _______________________________ ________ __________ 
+ * \_   _____/\______   \______   \\_____  \\______   \
+ *  |    __)_  |       _/|       _/ /   |   \|       _/
+ *  |        \ |    |   \|    |   \/    |    \    |   \
+ * /_______  / |____|_  /|____|_  /\_______  /____|_  /
+ *         \/         \/        \/         \/       \/        
+ *****************************************************/
+
+uint64_t essl_errno = 0ULL;
+
+#ifndef ESSL_SUPPORT_ERROR
+#define essl_update_errno() essl_errno = ERR_get_error()
+#else
+#define essl_update_errno() essl_errno = 0
+#endif /* ESSL_SUPPORT_ERROR */
+
+/**
+ * @brief Get the string representation of the essl_errno value in a static buffer.
+ * @return NULL if ESSL_SUPPORT_ERROR is not defined otherwise the string error.
+ */
+const char* essl_strerror(void)
+{
+#ifdef ESSL_SUPPORT_ERROR
+  return ERR_error_string(essl_errno, NULL);
+#else
+  return NULL;
+#endif /* ESSL_SUPPORT_ERROR */
+}
 
 /*****************************************************
  *    _____  ________   ________  
@@ -447,27 +478,20 @@ int essl_sha1_do_hash_file(const char* filename, essl_sha1_string_t output)
  *         \/         \/        \/        \/        \/
  *****************************************************/
 #ifdef ESSL_SUPPORT_SOCKET
-  
-uint64_t essl_errno = 0ULL;
 
-struct essl_context_ssl_s
+struct essl_socket_s
 {
-  SSL_CTX* ctx;
-  SSL* ssl;
+    SSL_CTX* ctx;
+    SSL* ssl;
 };
-
-#ifndef OPENSSL_NO_ERR
-#define essl_update_errno() essl_errno = ERR_get_error()
-#else
-#define essl_update_errno() essl_errno = 0
-#endif /* OPENSSL_NO_ERR */
 
 /**
  * @brief Initialize the SSL stack, should be called only once in your application.
  * @return -1 if the initialization fail, otherwise 0.
  */
-int essl_initialize_ssl(void)
+int essl_socket_initialize(void)
 {
+  essl_errno = 0ULL;
   OpenSSL_add_all_algorithms();
   ERR_load_BIO_strings();
   ERR_load_crypto_strings();
@@ -475,7 +499,7 @@ int essl_initialize_ssl(void)
   if(SSL_library_init() < 0)
   {
     essl_update_errno();
-    essl_release_ssl();
+    essl_socket_release();
     return -1;
   }
   return 0;
@@ -484,23 +508,10 @@ int essl_initialize_ssl(void)
 /**
  * @brief Release the SSL stack, should be called only once in your application.
  */
-void essl_release_ssl(void)
+void essl_socket_release(void)
 {
   ERR_free_strings();
   EVP_cleanup();
-}
-
-/**
- * @brief Get the string representation of the essl_errno value in a static buffer.
- * @return NULL if OPENSSL_NO_ERR is defined else the string error.
- */
-const char* essl_strerror_ssl(void)
-{
-#ifndef OPENSSL_NO_ERR
-  return ERR_error_string(essl_errno, NULL);
-#else
-  return NULL;
-#endif /* OPENSSL_NO_ERR */
 }
 
 /**
@@ -509,7 +520,7 @@ const char* essl_strerror_ssl(void)
  * @param[in] ctx X509 store context.
  * @return 1 to continue.
  */
-static int essl_dumb_callback(int preverify_ok, X509_STORE_CTX* ctx)
+static int essl_socket_dumb_callback(int preverify_ok, X509_STORE_CTX* ctx)
 {
   (void)preverify_ok;
   (void)ctx;
@@ -520,9 +531,10 @@ static int essl_dumb_callback(int preverify_ok, X509_STORE_CTX* ctx)
  * @brief Close the resources allocated by the connect/accept functions (does not close the user FD).
  * @param[in] essl The context to close.
  */
-void essl_close_ssl(essl_socket_t essl)
+void essl_socket_close(essl_socket_t essl)
 {
-  struct essl_context_ssl_s* e = (struct essl_context_ssl_s*)essl;
+  struct essl_socket_s* e = (struct essl_socket_s*)essl;
+  essl_errno = 0ULL;
   if(e)
   {
     if(e->ssl)
@@ -545,11 +557,12 @@ void essl_close_ssl(essl_socket_t essl)
  * @param[in] fd The user FD to bind.
  * @return NULL on error, otherwise the SSL context.
  */
-essl_socket_t essl_connect_ssl(int fd)
+essl_socket_t essl_socket_connect(int fd)
 {
-  struct essl_context_ssl_s* essl = NULL;
+  struct essl_socket_s* e = NULL;
   
-  if((essl = malloc(sizeof(struct essl_context_ssl_s))) == NULL)
+  essl_errno = 0ULL;
+  if((e = malloc(sizeof(struct essl_socket_s))) == NULL)
   {
     essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_CONNECT, ERR_R_MALLOC_FAILURE);
     return NULL;
@@ -560,42 +573,42 @@ essl_socket_t essl_connect_ssl(int fd)
   /* SSLv23_client_method(), SSLv2_client_method() and */
   /* SSLv3_client_method(). */
   /*  Try to create a new SSL context. */
-  if((essl->ctx = SSL_CTX_new(SSLv23_client_method())) == NULL)
+  if((e->ctx = SSL_CTX_new(SSLv23_client_method())) == NULL)
   {
     essl_update_errno();
-    free(essl);
+    free(e);
     return NULL;
   }
 
   /* Set it up so tha we will connect to *any* site, regardless of their certificate. */
-  SSL_CTX_set_verify(essl->ctx, SSL_VERIFY_NONE, essl_dumb_callback);
+  SSL_CTX_set_verify(e->ctx, SSL_VERIFY_NONE, essl_socket_dumb_callback);
   /* Enable bug support hacks. */
-  SSL_CTX_set_options(essl->ctx, SSL_OP_ALL);
+  SSL_CTX_set_options(e->ctx, SSL_OP_ALL);
 
   /* Create new SSL connection state object. */
-  essl->ssl = SSL_new(essl->ctx);
-  if(essl->ssl == NULL)
+  e->ssl = SSL_new(e->ctx);
+  if(e->ssl == NULL)
   {
     essl_update_errno();
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
   
   /* Attach the SSL session. */
-  SSL_set_fd(essl->ssl, fd);
+  SSL_set_fd(e->ssl, fd);
   /* Connect using the SSL session. */
-  if(SSL_connect(essl->ssl) != 1)
+  if(SSL_connect(e->ssl) != 1)
   {
     essl_update_errno();
     if(essl_errno == 0) essl_errno = ERR_PACK(ERR_LIB_SYS, SYS_F_CONNECT, ERR_R_SYS_LIB);
-    SSL_shutdown(essl->ssl);
-    SSL_free(essl->ssl);
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_shutdown(e->ssl);
+    SSL_free(e->ssl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
-  return essl;
+  return e;
 }
 
 /**
@@ -605,13 +618,13 @@ essl_socket_t essl_connect_ssl(int fd)
  * @param[in] private_key The private key file.
  * @return NULL on error, otherwise the SSL context.
  */
-essl_socket_t essl_accept_ssl(int fd, const struct essl_file_s cert, const struct essl_file_s private_key)
+essl_socket_t essl_socket_accept(int fd, const struct essl_socket_cert_s cert, const struct essl_socket_cert_s private_key)
 {
-  struct essl_context_ssl_s* essl = NULL;
-  
-  if((essl = malloc(sizeof(struct essl_context_ssl_s))) == NULL)
+  struct essl_socket_s* e = NULL;
+  essl_errno = 0ULL;
+  if((e = malloc(sizeof(struct essl_socket_s))) == NULL)
   {
-    essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_CONNECT, ERR_R_MALLOC_FAILURE);
+    essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_ACCEPT, ERR_R_MALLOC_FAILURE);
     return NULL;
   }
   
@@ -620,84 +633,84 @@ essl_socket_t essl_accept_ssl(int fd, const struct essl_file_s cert, const struc
   /* SSLv23_method(), SSLv2_method() and */
   /* SSLv3_method(). */
   /*  Try to create a new SSL context. */
-  if((essl->ctx = SSL_CTX_new(SSLv23_method())) == NULL)
+  if((e->ctx = SSL_CTX_new(SSLv23_method())) == NULL)
   {
     essl_update_errno();
-    free(essl);
+    free(e);
     return NULL;
   }
   /* Prevent small subgroup attacks */
-  SSL_CTX_set_options(essl->ctx, SSL_OP_SINGLE_DH_USE);
+  SSL_CTX_set_options(e->ctx, SSL_OP_SINGLE_DH_USE);
   /* Force openssl to use the user certs */ 
-  if (SSL_CTX_load_verify_locations(essl->ctx, cert.path, private_key.path) != 1)
+  if (SSL_CTX_load_verify_locations(e->ctx, cert.path, private_key.path) != 1)
   {
     essl_update_errno();
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
-  if (SSL_CTX_set_default_verify_paths(essl->ctx) != 1)
+  if (SSL_CTX_set_default_verify_paths(e->ctx) != 1)
   {
     essl_update_errno();
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
   
   /* Use the proper cert file */
-  if(SSL_CTX_use_certificate_file(essl->ctx, cert.path, cert.type == ESSL_FILE_TYPE_ASN1 ? SSL_FILETYPE_ASN1 : SSL_FILETYPE_PEM) <= 0)
+  if(SSL_CTX_use_certificate_file(e->ctx, cert.path, cert.type == ESSL_SOCKET_CERT_TYPE_ASN1 ? SSL_FILETYPE_ASN1 : SSL_FILETYPE_PEM) <= 0)
   {
     essl_update_errno();
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
   
   /* Use the proper private key file */
-  if(SSL_CTX_use_PrivateKey_file(essl->ctx, private_key.path, private_key.type == ESSL_FILE_TYPE_ASN1 ? SSL_FILETYPE_ASN1 : SSL_FILETYPE_PEM) <= 0)
+  if(SSL_CTX_use_PrivateKey_file(e->ctx, private_key.path, private_key.type == ESSL_SOCKET_CERT_TYPE_ASN1 ? SSL_FILETYPE_ASN1 : SSL_FILETYPE_PEM) <= 0)
   {
     essl_update_errno();
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
   
   /* verify private key */
-  if (!SSL_CTX_check_private_key(essl->ctx))
+  if (!SSL_CTX_check_private_key(e->ctx))
   {
     essl_update_errno();
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
 
   /* Create new SSL connection state object. */
-  essl->ssl = SSL_new(essl->ctx);
-  if(essl->ssl == NULL)
+  e->ssl = SSL_new(e->ctx);
+  if(e->ssl == NULL)
   {
     essl_update_errno();
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
   
   /* Attach the SSL session. */
-  SSL_set_fd(essl->ssl, fd);
+  SSL_set_fd(e->ssl, fd);
   
   /* Connect using the SSL session. */
-  if(SSL_accept(essl->ssl) != 1)
+  if(SSL_accept(e->ssl) != 1)
   {
     essl_update_errno();
     if(essl_errno == 0)
       essl_errno = ERR_PACK(ERR_LIB_SYS, SYS_F_ACCEPT, ERR_R_SYS_LIB);
-    SSL_shutdown(essl->ssl);
-    SSL_free(essl->ssl);
-    SSL_CTX_free(essl->ctx);
-    free(essl);
+    SSL_shutdown(e->ssl);
+    SSL_free(e->ssl);
+    SSL_CTX_free(e->ctx);
+    free(e);
     return NULL;
   }
   
-  return essl;
+  return e;
 }
 
 /**
@@ -709,14 +722,15 @@ essl_socket_t essl_accept_ssl(int fd, const struct essl_file_s cert, const struc
  * >0 The write operation was successful, the return value is the number of bytes actually written to the TLS/SSL connection.
  * =0 The write operation was not successful. Probably the underlying connection was closed. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
  * <0 The write operation was not successful, because either an error occurred or action must be taken by the calling process. See essl_errno to find out the reason.
-*/
-int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length)
+ */
+int essl_socket_write(essl_socket_t essl, const void* buffer, size_t length)
 {
   int r;
-  struct essl_context_ssl_s* e = (struct essl_context_ssl_s*)essl;
+  essl_errno = 0ULL;
+  struct essl_socket_s* e = (struct essl_socket_s*)essl;
   if(!e)
   {
-    essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_FREAD, ERR_R_PASSED_NULL_PARAMETER);
+    essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_FFLUSH, ERR_R_PASSED_NULL_PARAMETER);
     return -1;
   }
   r = SSL_write(e->ssl, buffer, length);
@@ -733,11 +747,12 @@ int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length)
  * >0 The read operation was successful; the return value is the number of bytes actually read from the TLS/SSL connection.
  * =0 The read operation was not successful. The reason may either be a clean shutdown due to a "close notify" alert sent by the peer (in which case the SSL_RECEIVED_SHUTDOWN flag in the ssl shutdown state is set (see SSL_shutdown, SSL_set_shutdown). It is also possible, that the peer simply shut down the underlying transport and the shutdown is incomplete. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
  * <0 The read operation was not successful, because either an error occurred or action must be taken by the calling process. See essl_errno to find out the reason.
-*/
-int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length)
+ */
+int essl_socket_read(essl_socket_t essl, void* buffer, size_t length)
 {
   int r;
-  struct essl_context_ssl_s* e = (struct essl_context_ssl_s*)essl;
+  essl_errno = 0ULL;
+  struct essl_socket_s* e = (struct essl_socket_s*)essl;
   if(!e) {
     essl_errno = ERR_PACK(ERR_LIB_USER, SYS_F_FREAD, ERR_R_PASSED_NULL_PARAMETER);
     return -1;
@@ -760,8 +775,8 @@ int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length)
 
 struct essl_aes_s
 {
-  EVP_CIPHER_CTX* encrypt;
-  EVP_CIPHER_CTX* decrypt;
+    EVP_CIPHER_CTX* encrypt;
+    EVP_CIPHER_CTX* decrypt;
 };
 
 /**
@@ -779,25 +794,33 @@ essl_aes_t essl_aes_initialize(const uint8_t* key_data, size_t key_data_len, con
   uint8_t key[ESSL_AES_KEY_LEN];
   uint8_t iv[ESSL_AES_KEY_LEN];
   
+  essl_errno = 0ULL;
   if((ctx = malloc(sizeof(struct essl_aes_s))) == NULL)
   {
+    essl_errno = ERR_PACK(ERR_LIB_USER, 0, ERR_R_MALLOC_FAILURE);
     return NULL;
   }
   /* Generate the key and the IV for AES 256 CBC mode. A SHA1 digest is used to hash the supplied key. */
   i = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), salt, key_data, key_data_len, count, key, iv);
   if (i != ESSL_AES_KEY_LEN)
   {
+    essl_update_errno();
+    if(essl_errno == 0) essl_errno = ERR_PACK(ERR_LIB_SYS, 0, ERR_R_EVP_LIB);
     free(ctx);
     return NULL;
   }
 
   if((ctx->encrypt = EVP_CIPHER_CTX_new()) == NULL)
   {
+    essl_update_errno();
+    if(essl_errno == 0) essl_errno = ERR_PACK(ERR_LIB_SYS, 0, ERR_R_EVP_LIB);
     free(ctx);
     return NULL;
   }
   if((ctx->decrypt = EVP_CIPHER_CTX_new()) == NULL)
   {
+    essl_update_errno();
+    if(essl_errno == 0) essl_errno = ERR_PACK(ERR_LIB_SYS, 0, ERR_R_EVP_LIB);
     EVP_CIPHER_CTX_free(ctx->encrypt);
     free(ctx);
     return NULL;
@@ -820,8 +843,12 @@ essl_aes_t essl_aes_initialize(const uint8_t* key_data, size_t key_data_len, con
 void essl_aes_release(essl_aes_t context)
 {
   struct essl_aes_s* ctx = (struct essl_aes_s*)context;
+  essl_errno = 0ULL;
   if(ctx == NULL)
+  {
+    essl_errno = ERR_PACK(ERR_LIB_USER, 0, ERR_R_OPERATION_FAIL);
     return;
+  }
   if(ctx->encrypt != NULL)
   {
     EVP_CIPHER_CTX_cleanup(ctx->encrypt);
@@ -848,14 +875,21 @@ void essl_aes_release(essl_aes_t context)
 uint8_t* essl_aes_encrypt(essl_aes_t context, const uint8_t* plaintext, size_t* len)
 {
   struct essl_aes_s* ctx = (struct essl_aes_s*)context;
+  essl_errno = 0ULL;
   if(ctx == NULL || ctx->encrypt == NULL)
+  {
+    essl_errno = ERR_PACK(ERR_LIB_USER, 0, ERR_R_OPERATION_FAIL);
     return NULL;
+  }
   /* max ciphertext len for a n bytes of plaintext is n + AES_BLOCK_SIZE -1 bytes */
   size_t cipher_len = *len + AES_BLOCK_SIZE;
   size_t final_len = 0;
   uint8_t* ciphertext = malloc(cipher_len);
   if(ciphertext == NULL)
+  {
+    essl_errno = ERR_PACK(ERR_LIB_USER, 0, ERR_R_MALLOC_FAILURE);
     return NULL;
+  }
   /* Allows the reuse of "enc_ctx" for multiple encryption cycles. */
   EVP_EncryptInit_ex(ctx->encrypt, NULL, NULL, NULL, NULL);
 
@@ -880,15 +914,22 @@ uint8_t* essl_aes_encrypt(essl_aes_t context, const uint8_t* plaintext, size_t* 
 uint8_t* essl_aes_decrypt(essl_aes_t context, const uint8_t* ciphertext, size_t* len)
 {
   struct essl_aes_s* ctx = (struct essl_aes_s*)context;
+  essl_errno = 0ULL;
   if(ctx == NULL || ctx->decrypt == NULL)
+  {
+    essl_errno = ERR_PACK(ERR_LIB_USER, 0, ERR_R_OPERATION_FAIL);
     return NULL;
+  }
   /* The plaintext will always be equal to or less than the length of the cipher text. */
   size_t plain_len = *len;
   size_t final_len = 0;
   uint8_t* plaintext = malloc(plain_len);
   
   if(plaintext == NULL)
+  {
+    essl_errno = ERR_PACK(ERR_LIB_USER, 0, ERR_R_MALLOC_FAILURE);
     return NULL;
+  }
   /* Allows the reuse of "dec_ctx" for multiple decryption cycles. */
   EVP_DecryptInit_ex(ctx->decrypt, NULL, NULL, NULL, NULL);
   /* Plaintext update, plain_len is filled with the length of the generated plaintext, len is the cipher text size in bytes. */
