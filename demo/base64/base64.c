@@ -2,19 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define GCC_VERSION (__GNUC__ * 10000 \
-                               + __GNUC_MINOR__ * 100 \
-                               + __GNUC_PATCHLEVEL__)
+#define GCC_VERSION (__GNUC__ * 10000		\
+		     + __GNUC_MINOR__ * 100	\
+		     + __GNUC_PATCHLEVEL__)
 #if GCC_VERSION > 40900 /* 4.9.0 */
-  #define PRINTF_SIZE_T "zu"
+#define PRINTF_SIZE_T "zu"
 #else
-  #define PRINTF_SIZE_T "lu"
+#define PRINTF_SIZE_T "lu"
 #endif
 
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
+  (void)argc;/* remove warning */
+  (void)argv;/* remove warning */
 
-#ifndef OPENSSL_NO_BIO
+#ifdef ESSL_SUPPORT_BASE64
   const char* str = "Hello world";
   char* output = NULL;
   char* output2 = NULL;
@@ -36,6 +39,6 @@ int main(int argc, char** argv) {
   free(output);
 #else
   printf("Base64 not supported\n");
-#endif /* OPENSSL_NO_BIO */
+#endif /* ESSL_SUPPORT_BASE64 */
   return 0;
 }

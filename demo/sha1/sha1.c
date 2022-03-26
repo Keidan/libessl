@@ -2,8 +2,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(int argc, char** argv) {
-#ifndef OPENSSL_NO_SHA1
+int main(int argc, char** argv)
+{
+  (void)argc;/* remove warning */
+#ifdef ESSL_SUPPORT_SHA1
   const char* str = "Hello world";
   essl_sha1_string_t output;
 
@@ -17,7 +19,8 @@ int main(int argc, char** argv) {
     printf("%s: '%s'\n", argv[0], output);
   else fprintf(stderr, "Unable to sha1: (%d) %s\n", errno, strerror(errno));
 #else
+  (void)argv;/* remove warning */
   printf("SHA not supported\n");
-#endif /* OPENSSL_NO_SHA1 */
+#endif /* ESSL_SUPPORT_SHA1 */
   return 0;
 }

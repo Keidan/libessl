@@ -43,6 +43,7 @@ extern "C" {
 #endif /* __cplusplus */
 
   #include <string.h>
+  #include <stdint.h>
   #include <errno.h>
   #include <openssl/opensslconf.h>
 
@@ -56,7 +57,11 @@ extern "C" {
    *         \/        \/         \/                               
    *****************************************************/
 #ifndef OPENSSL_NO_MD2
+  
   #include <openssl/md2.h>
+
+  #define ESSL_SUPPORT_MD2
+  
   /**
    * @def ESSL_MD2_STRING_LENGTH
    * @brief The Hexa string length.
@@ -73,7 +78,7 @@ extern "C" {
    * @typedef essl_md2_digest_t
    * @brief MD2 digest type.
    */
-  typedef unsigned char essl_md2_digest_t[ESSL_MD2_DIGEST_LENGTH];
+  typedef uint8_t essl_md2_digest_t[ESSL_MD2_DIGEST_LENGTH];
 
   /**
    * @typedef essl_md2_string_t
@@ -82,28 +87,25 @@ extern "C" {
   typedef char essl_md2_string_t [ESSL_MD2_STRING_LENGTH];
 
   /**
-   * @fn void essl_md2_do_hash(const char* str, size_t length, essl_md24_digest_t result) 
    * @brief Generate a MD2 digest
-   * @param str String to hash
-   * @param length String length to hash
-   * @param result Output hash
+   * @param[in] str String to hash
+   * @param[in] length String length to hash
+   * @param[out] result Output hash
    */
   void essl_md2_do_hash(const char* str, size_t length, essl_md2_digest_t result);
 
   /**
-   * @fn void essl_md2_digest_to_string(essl_md2_digest_t digest, essl_md2_string_t str)
    * @brief Convert a MD2 hash to hexa string.
-   * @param digest MD2 hash
-   * @param str Output string.
+   * @param[in] digest MD2 hash
+   * @param[out] str Output string.
    */
   void essl_md2_digest_to_string(essl_md2_digest_t digest, essl_md2_string_t str);
 
   /**
-   * @fn void essl_md2_do_hash_file(const char* filename, essl_md2_digest_t result) 
    * @brief Generate a MD2 digest of a file
-   * @param filename The file to hash
-   * @param result Output hash
-   * @return -1 on error, 0 else (see errno for more details).
+   * @param[in] filename The file to hash
+   * @param[out] result Output hash
+   * @return -1 on error, otherwise 0 (see errno for more details).
    */
   int essl_md2_do_hash_file(const char* filename, essl_md2_digest_t result);
 #endif /* OPENSSL_NO_MD2 */
@@ -120,6 +122,8 @@ extern "C" {
 #ifndef OPENSSL_NO_MD4
   #include <openssl/md4.h>
 
+  #define ESSL_SUPPORT_MD4
+  
   /**
    * @def ESSL_MD4_STRING_LENGTH
    * @brief The Hexa string length.
@@ -136,7 +140,7 @@ extern "C" {
    * @typedef essl_md4_digest_t
    * @brief MD4 digest type.
    */
-  typedef unsigned char essl_md4_digest_t[ESSL_MD4_DIGEST_LENGTH];
+  typedef uint8_t essl_md4_digest_t[ESSL_MD4_DIGEST_LENGTH];
 
   /**
    * @typedef essl_md4_string_t
@@ -145,28 +149,25 @@ extern "C" {
   typedef char essl_md4_string_t [ESSL_MD4_STRING_LENGTH];
 
   /**
-   * @fn void essl_md4_do_hash(const char* str, size_t length, essl_md4_digest_t result) 
    * @brief Generate a MD4 digest
-   * @param str String to hash
-   * @param length String length to hash
-   * @param result Output hash
+   * @param[in] str String to hash
+   * @param[in] length String length to hash
+   * @param[out] result Output hash
    */
   void essl_md4_do_hash(const char* str, size_t length, essl_md4_digest_t result);
 
   /**
-   * @fn void essl_md4_digest_to_string(essl_md4_digest_t digest, essl_md4_string_t str)
    * @brief Convert a MD4 hash to hexa string.
-   * @param digest MD4 hash
-   * @param str Output string.
+   * @param[in] digest MD4 hash
+   * @param[out] str Output string.
    */
   void essl_md4_digest_to_string(essl_md4_digest_t digest, essl_md4_string_t str);
 
   /**
-   * @fn void essl_md4_do_hash_file(const char* filename, essl_md4_digest_t result) 
    * @brief Generate a MD4 digest of a file
-   * @param filename The file to hash
-   * @param result Output hash
-   * @return -1 on error, 0 else (see errno for more details).
+   * @param[in] filename The file to hash
+   * @param[out] result Output hash
+   * @return -1 on error, otherwise 0 (see errno for more details).
    */
   int essl_md4_do_hash_file(const char* filename, essl_md4_digest_t result);
 #endif /* OPENSSL_NO_MD4 */
@@ -182,6 +183,8 @@ extern "C" {
    *****************************************************/
 #ifndef OPENSSL_NO_MD5
   #include <openssl/md5.h>
+
+  #define ESSL_SUPPORT_MD5
 
   /**
    * @def ESSL_MD5_STRING_LENGTH
@@ -199,7 +202,7 @@ extern "C" {
    * @typedef essl_md5_digest_t
    * @brief MD5 digest type.
    */
-  typedef unsigned char essl_md5_digest_t[ESSL_MD5_DIGEST_LENGTH];
+  typedef uint8_t essl_md5_digest_t[ESSL_MD5_DIGEST_LENGTH];
 
   /**
    * @typedef essl_md5_string_t
@@ -208,28 +211,25 @@ extern "C" {
   typedef char essl_md5_string_t [ESSL_MD5_STRING_LENGTH];
 
   /**
-   * @fn void essl_md5_do_hash(const char* str, size_t length, essl_md5_digest_t result) 
    * @brief Generate a MD5 digest
-   * @param str String to hash
-   * @param length String length to hash
-   * @param result Output hash
+   * @param[in] str String to hash
+   * @param[in] length String length to hash
+   * @param[out] result Output hash
    */
   void essl_md5_do_hash(const char* str, size_t length, essl_md5_digest_t result);
 
   /**
-   * @fn void essl_md5_digest_to_string(essl_md5_digest_t digest, essl_md5_string_t str)
    * @brief Convert a MD5 hash to hexa string.
-   * @param digest MD5 hash
-   * @param str Output string.
+   * @param[in] digest MD5 hash
+   * @param[out] str Output string.
    */
   void essl_md5_digest_to_string(essl_md5_digest_t digest, essl_md5_string_t str);
 
   /**
-   * @fn void essl_md5_do_hash_file(const char* filename, essl_md5_digest_t result) 
    * @brief Generate a MD5 digest of a file
-   * @param filename The file to hash
-   * @param result Output hash
-   * @return -1 on error, 0 else (see errno for more details).
+   * @param[in] filename The file to hash
+   * @param[out] result Output hash
+   * @return -1 on error, otherwise 0 (see errno for more details).
    */
   int essl_md5_do_hash_file(const char* filename, essl_md5_digest_t result);
 #endif /* OPENSSL_NO_MD5 */
@@ -244,36 +244,36 @@ extern "C" {
    *         \/         \/        \/         \/         \/      |__| 
    *****************************************************/
 #ifndef OPENSSL_NO_BIO
+
+  #define ESSL_SUPPORT_BASE64
+  
   /**
-   * @fn int essl_base64_encode(const char *input, const size_t ilength, char** output, size_t *olength)
    * @brief Encode a paln text to a base64 representation.
-   * @param input The plain text to encode.
-   * @param ilength The plain text length.
-   * @param output The encoded message in base64 (free required)
-   * @param olength The encoded message length.
-   * @return -1 on error, 0 else (see errno for more details).
+   * @param[in] input The plain text to encode.
+   * @param[in] ilength The plain text length.
+   * @param[out] output The encoded message in base64 (free required)
+   * @param[out] olength The encoded message length.
+   * @return -1 on error, otherwise 0 (see errno for more details).
    */ 
-  int essl_base64_encode(const char *input, const size_t ilength, char** output, size_t *olength);
+  int essl_base64_encode(const char* input, const size_t ilength, char** output, size_t* olength);
  
   /**
-   * @fn int essl_base64_decode(const char *input, const size_t ilength, char **output, size_t *olength)
    * @brief Decode a base64 message to a plain text.
-   * @param input The message in base64.
-   * @param ilength  The length of the base64 message.
-   * @param output The plain text message (free required).
-   * @param olength The decoded message length.
-   * @return -1 on error, 0 else (see errno for more details).
+   * @param[in] input The message in base64.
+   * @param[in] ilength  The length of the base64 message.
+   * @param[out] output The plain text message (free required).
+   * @param[out] olength The decoded message length.
+   * @return -1 on error, otherwise 0 (see errno for more details).
    */ 
-  int essl_base64_decode(const char *input, const size_t ilength, char **output, size_t *olength);
+  int essl_base64_decode(const char* input, const size_t ilength, char** output, size_t* olength);
 
   /**
-   * @fn size_t essl_base64_adjust_decode_length(const char *input, const size_t ilength)
    * @brief Get the length of the decoded message.
-   * @param input The base64 buffer length
-   * @param olength The encoded message length.
+   * @param[in] input The base64 buffer length
+   * @param[in] ilength The encoded message length.
    * @return The decoded length of the base64 message.
    */
-  size_t essl_base64_adjust_decode_length(const char *input, const size_t ilength);
+  size_t essl_base64_adjust_decode_length(const char* input, const size_t ilength);
 #endif /* OPENSSL_NO_BIO */
 
 
@@ -287,6 +287,9 @@ extern "C" {
    *****************************************************/
 #ifndef OPENSSL_NO_SHA1
   #include <openssl/sha.h>
+
+  #define ESSL_SUPPORT_SHA1
+  
   /**
    * @def SHA_DIGEST_LENGTH
    * @brief The length of the SHA digest.
@@ -306,21 +309,19 @@ extern "C" {
   typedef char essl_sha1_string_t[ESSL_SHA_HEX_DIGEST_LENGTH + 1];
 
   /**
-   * @fn int essl_sha1_do_hash(const char* input, size_t ilength, essl_sha1_string_t output)
    * @brief Calculate a SHA1 for a specified string.
-   * @param input The plain text to encode.
-   * @param ilength The plain text length.
-   * @param output The encoded output string.
-   * @return -1 on error, 0 else (see errno for more details).
+   * @param[in] input The plain text to encode.
+   * @param[in] ilength The plain text length.
+   * @param[out] output The encoded output string.
+   * @return -1 on error, otherwise 0 (see errno for more details).
    */
   int essl_sha1_do_hash(const char* input, size_t ilength, essl_sha1_string_t output);
 
   /**
-   * @fn int essl_sha1_do_hash_file(const char* filename, essl_sha1_string_t output)
    * @brief Calculate a SHA1 for a specified file.
-   * @param filename The file name.
-   * @param output The output buffer with the sha1.
-   * @return -1 on error, 0 else (see errno for more details).
+   * @param[in] filename The file name.
+   * @param[out] output The output buffer with the sha1.
+   * @return -1 on error, otherwise 0 (see errno for more details).
    */
   int essl_sha1_do_hash_file(const char* filename, essl_sha1_string_t output);
 #endif /* OPENSSL_NO_SHA1 */
@@ -336,7 +337,9 @@ extern "C" {
    *****************************************************/
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_BIO)
 
-  extern unsigned long essl_errno;
+  #define ESSL_SUPPORT_SOCKET
+
+  extern uint64_t essl_errno;
   
   /**
    * @typedef essl_socket_t
@@ -349,7 +352,8 @@ extern "C" {
    * @enum essl_file_type_et
    * @brief Enum used to define the specified file type.
    */
-  typedef enum { 
+  typedef enum
+  { 
     ESSL_FILE_TYPE_ASN1 = 0, /**< File type ASN1 */
     ESSL_FILE_TYPE_PEM  = 1  /**< File type PEM */
   } essl_file_type_et;
@@ -358,63 +362,57 @@ extern "C" {
    * @struct essl_file_s
    * @brief Specifying the certificate to use for the server part.
    */
-  struct essl_file_s {
+  struct essl_file_s
+  {
     essl_file_type_et type; /**< The file type. */
-    char*             path; /**< The file path. */
+    char* path; /**< The file path. */
   };
   
   
   /**
-   * @fn int essl_initialize_ssl(void)
    * @brief Initialize the SSL stack, should be called only once in your application.
-   * @return -1 if the initialization fail, 0 else.
+   * @return -1 if the initialization fail, otherwise 0.
    */
   int essl_initialize_ssl(void);
   
   /**
-   * @fn void essl_initialize_ssl(void)
    * @brief Release the SSL stack, should be called only once in your application.
    */
   void essl_release_ssl(void);
   
   /**
-   * @fn const char* essl_strerror_ssl(void)
    * @brief Get the string representation of the essl_errno value in a static buffer.
    * @return NULL if OPENSSL_NO_ERR is defined else the string error.
    */
   const char* essl_strerror_ssl(void);
   
   /**
-   * @fn essl_socket_t essl_connect_ssl(int fd)
    * @brief Bind an suer socket fd to the SSL context.
-  * @param fd The user FD to bind.
-   * @return NULL on error, else the SSL context.
+   * @param[in] fd The user FD to bind.
+   * @return NULL on error, otherwise the SSL context.
    */
   essl_socket_t essl_connect_ssl(int fd);
 
   /**
-   * @fn essl_socket_t essl_accept_ssl(int fd)
    * @brief Bind an user socket fd to the SSL context.
-   * @param fd The user FD to bind.
-   * @param cert The certificate file to use.
-   * @param private_key The private key file.
-   * @return NULL on error, else the SSL context.
+   * @param[in] fd The user FD to bind.
+   * @param[in] cert The certificate file to use.
+   * @param[in] private_key The private key file.
+   * @return NULL on error, otherwise the SSL context.
    */
   essl_socket_t essl_accept_ssl(int fd, const struct essl_file_s cert, const struct essl_file_s private_key);
 
   /**
-   * @fn void essl_close_ssl(essl_socket_t essl)
    * @brief Close the resources allocated by the connect/accept function (does not close the user FD).
-   * @param essl The context to close.
+   * @param[in,out] essl The context to close.
    */
   void essl_close_ssl(essl_socket_t essl);
   
   /**
-   * @fn int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length)
    * @brief Write a buffer into the specified ssl connection.
-   * @param essl The SSL context.
-   * @param buffer The buffer to write.
-   * @param length The buffer length.
+   * @param[in] essl The SSL context.
+   * @param[in] buffer The buffer to write.
+   * @param[in] length The buffer length.
    * @return 
    * >0 The write operation was successful, the return value is the number of bytes actually written to the TLS/SSL connection.
    * =0 The write operation was not successful. Probably the underlying connection was closed. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
@@ -423,11 +421,10 @@ extern "C" {
   int essl_write_ssl(essl_socket_t essl, const void* buffer, size_t length);
 
   /**
-   * @fn int essl_read_ssl(essl_socket_t essl, void* buffer, size_t length)
    * @brief Read a buffer from the specified ssl connection.
-   * @param essl The SSL context.
-   * @param buffer The buffer to read.
-   * @param length The buffer length.
+   * @param[in] essl The SSL context.
+   * @param[out] buffer The buffer to read.
+   * @param[in] length The buffer length.
    * @return 
    * >0 The read operation was successful; the return value is the number of bytes actually read from the TLS/SSL connection.
    * =0 The read operation was not successful. The reason may either be a clean shutdown due to a "close notify" alert sent by the peer (in which case the SSL_RECEIVED_SHUTDOWN flag in the ssl shutdown state is set (see SSL_shutdown, SSL_set_shutdown). It is also possible, that the peer simply shut down the underlying transport and the shutdown is incomplete. Call SSL_get_error() with the return value ret to find out, whether an error occurred or the connection was shut down cleanly (SSL_ERROR_ZERO_RETURN).
@@ -437,6 +434,75 @@ extern "C" {
   
 #endif /* OPENSSL_NO_SSL2 && OPENSSL_NO_BIO */
 
+  /*****************************************************
+   *     _____  ___________ _________ 
+   *    /  _  \ \_   _____//   _____/ 
+   *   /  /_\  \ |    __)_ \_____  \  
+   *  /    |    \|        \/        \ 
+   *  \____|__  /_______  /_______  / 
+   *          \/        \/        \/  
+   *****************************************************/
+#ifndef EVP_MD
+
+  #define ESSL_SUPPORT_AES
+
+  /**
+   * @def ESSL_AES_COUNT
+   * @brief The iteration count to use.
+   */
+  #define ESSL_AES_COUNT 5
+  
+  /**
+   * @def ESSL_AES_KEY_LEN
+   * @brief The default key length.
+   */
+  #define ESSL_AES_KEY_LEN 32
+  
+  /**
+   * @typedef essl_aes_t
+   * @brief AES context.
+   */
+  typedef void* essl_aes_t;
+
+  
+  /**
+   * @brief Creates a 256-bit key and an IV using the key data provided.
+   * @param[in] key_data Buffer containing data bytes that is used to derive the key data.
+   * @param[in] key_data_len The buffer length.
+   * @param[in] salt Used as a salt in the derivation: it should point to an 8 byte buffer or NULL if no salt is used.
+   * @param[in] count The iteration count to use. A higher value is more secure but slower. (see ESSL_AES_COUNT)
+   * @return NULL on error, otherwise the context.
+   */
+  essl_aes_t essl_aes_initialize(const uint8_t* key_data, size_t key_data_len, const uint8_t* salt, int count);
+
+  /**
+   * @brief Release of resources allocated by the essl_aes_initialize function.
+   * @param[out] context The AES context.
+   * @param[out] enc_ctx Context used for encryption.
+   * @param[out] dec_ctx Context used for decryption.*
+   */
+  void essl_aes_release(essl_aes_t context);
+
+  /**
+   * @brief Encryption of the text pointed by 'plain_text'.
+   * @param[in] context The AES context.
+   * @param[in] enc_ctx Context used for encryption.
+   * @param[in] plaintext The plaintext to encrypt.
+   * @param[out] len The size of the text, this size will be updated at the output of the function, this update will correspond to the size of the output buffer.
+   * @return Returns the encrypted buffer (WARNING: a malloc is done on this buffer, the user must free it), otherwise NULL.
+   */
+  uint8_t* essl_aes_encrypt(essl_aes_t context, const uint8_t* plaintext, size_t* len);
+
+  /**
+   * @brief Decryption of the text pointed by 'cipher_text'.
+   * @param[in] context The AES context.
+   * @param[in] dec_ctx Context used for decryption.
+   * @param[in] ciphertext The cipher text to decrypt.
+   * @param[out] len The size of the text, this size will be updated at the output of the function, this update will correspond to the size of the output buffer.
+   * @return Returns the plaintext buffer (WARNING: a malloc is done on this buffer, the user must free it), otherwise NULL.
+   */
+  uint8_t* essl_aes_decrypt(essl_aes_t context, const uint8_t* ciphertext, size_t* len);
+#endif /* EVP_MD */
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

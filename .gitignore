@@ -4,3 +4,5 @@
 *~
 *.elf
 *.pem
+/build/
+/deploy/
