@@ -17,7 +17,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${outputDir})
 
 set(C_OPTIONS "")
 if("${DISTRIBUTION}" MATCHES "release")
-  set(C_OPTIONS "-o3 -Wl,-z,relro,-z,now -fstack-protector-all -D_FORTIFY_SOURCE=2 -ffunction-sections -Wall -W -pedantic -fPIC")
+  set(C_OPTIONS "-O3 -Wl,-z,relro,-z,now -fstack-protector-all -D_FORTIFY_SOURCE=2 -ffunction-sections -Wall -W -pedantic -fPIC")
   add_definitions(-DNDEBUG)
 else()
   set(DISTRIBUTION "debug")
