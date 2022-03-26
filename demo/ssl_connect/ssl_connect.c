@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#define EXIT_NOT_SUPPORTED 2
+
 int main(int argc, char** argv)
 {
   (void)argc;/* remove warning */
@@ -89,9 +91,10 @@ int main(int argc, char** argv)
   essl_socket_close(essl);
   close(fd);
   essl_socket_release();
+  return EXIT_SUCCESS;
 #else
   (void)argv;/* remove warning */
   printf("SSL socket not supported\n");
+  return EXIT_NOT_SUPPORTED;
 #endif /* ESSL_SUPPORT_SOCKET */
-  return 0;
 }

@@ -28,18 +28,27 @@ jobs:
       - name: Install dependencies
         run: |
             sudo apt-get update
-            sudo apt-get install cmake libssl-dev
+            sudo apt-get install cmake libssl-dev python3
             cmake --version
             gcc --version
+            python --version
       - name: Configure for debug
         shell: bash
         run: cmake -S . -B build -DDISTRIBUTION=debug .
       - name: Build debug
         shell: bash
         run: cmake --build build
+      - name: Run test
+        shell: bash
+        run: |
+            python test.py
       - name: Configure for release
         shell: bash
         run: cmake -S . -B build -DDISTRIBUTION=release .
       - name: Build release
         shell: bash
         run: cmake --build build
+      - name: Run test
+        shell: bash
+        run: |
+            python test.py

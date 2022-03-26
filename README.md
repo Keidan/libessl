@@ -6,22 +6,22 @@
 (GPL) Easy SSL is a FREE library based on OpenSSL libraries.
 
 
-This library aims to simplify the use of certain functions offered by OpenSSL:
+This library aims to simplify the use of some functions offered by OpenSSL :
 
-	B64 (strings, stream)
-	MD2 hash (strings, stream, files)
-	MD4 hash (strings, stream, files)
-	MD5 hash (strings, stream, files)
-	SHA1 hash (strings, stream, files)
-	AES ecryption/decryption (strings)
-	SSL socket (connect/accept)
+	Base64 (strings)
+	MD2 hashing (strings)
+	MD4 hashing (strings)
+	MD5 hashing (strings)
+	SHA1 hashing (strings, files)
+	AES encryption/decryption (strings)
+	Socket SSL (connect/accept/write/read/close)
 	Etc ... See the demo applications for the list of supported modules.
 
-To build this library, you must have the OpenSSL development package installed (libssl-dev).
+To build this library, you must have installed the OpenSSL development package (libssl-dev).
+
+**Note:** The modules ssl\_connect and ssl\_accept are deliberately excluded from the tests.py file.
 
 This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY.
-
-
 
 ## Instructions
 

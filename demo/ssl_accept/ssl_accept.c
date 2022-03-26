@@ -11,7 +11,7 @@
 #include <sys/select.h>
 #include <signal.h>
 
-
+#define EXIT_NOT_SUPPORTED 2
 #define SOCKET_MAX_CONNECTIONS 10
 #define PORT 443
 #define BUFFER_LENGTH 1024
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 #else
   printf("SSL socket not supported\n");
 #endif /* ESSL_SUPPORT_SOCKET */
-  return 0;
+  return EXIT_NOT_SUPPORTED;
 }
 
 #ifdef ESSL_SUPPORT_SOCKET

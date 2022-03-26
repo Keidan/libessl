@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define EXIT_NOT_SUPPORTED 2
+
 int main(int argc, char** argv)
 {
   (void)argc;/* remove warning */
@@ -26,6 +28,7 @@ int main(int argc, char** argv)
   const char* the_key = "It's my beautiful key";
   key_data = (uint8_t *)the_key;
   key_data_len = strlen(the_key);
+  char success = 1;
   
   /* gen key and iv. init the cipher ctx object */
   if ((ctx = essl_aes_initialize(key_data, key_data_len, (uint8_t *)&salt, ESSL_AES_COUNT)) == NULL)
@@ -35,7 +38,7 @@ int main(int argc, char** argv)
   }
 
   /* encrypt and decrypt each texts string and compare with the original */
-  for (i = 0; texts[i]; i++)
+  for (i = 0; texts[i] && success == 1; i++)
   {
     char *plaintext;
     uint8_t *ciphertext;
@@ -46,17 +49,20 @@ int main(int argc, char** argv)
     ciphertext = essl_aes_encrypt(ctx, (const uint8_t*)texts[i], &len);
     plaintext = (char *)essl_aes_decrypt(ctx, ciphertext, &len);
 
-    if (strncmp(plaintext, texts[i], olen) != 0) 
+    if (strncmp(plaintext, texts[i], olen) != 0)
+    {
       printf("Encrypt/Decrypt ERROR for \"%s\"\n", texts[i]);
-    else 
+      success = 0;
+    }
+    else
       printf("Encrypt/Decrypt SUCCESS for \"%s\"\n", plaintext);
-    
     free(ciphertext);
     free(plaintext);
   }
   essl_aes_release(ctx);
+  return success == 1 ? EXIT_SUCCESS : EXIT_FAILURE;
 #else
   printf("AES not supported\n");
+  return EXIT_NOT_SUPPORTED;
 #endif /* ESSL_SUPPORT_AES */
-  return 0;
 }
