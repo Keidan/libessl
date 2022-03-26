@@ -1,5 +1,6 @@
 # libessl
 [![Linux CI](https://github.com/Keidan/libessl/actions/workflows/linux.yml/badge.svg)][linuxCI]
+[![CodeFactor](https://www.codefactor.io/repository/github/keidan/libessl/badge)][codefactor]
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)][license]
 
 (GPL) Easy SSL is a FREE library based on OpenSSL libraries.
@@ -40,4 +41,5 @@ Download the software :
 [GPLv3](https://github.com/Keidan/libessl/blob/master/license.txt)
 
 [linuxCI]: https://github.com/Keidan/libessl/actions?query=workflow%3ALinux
+[codefactor]: https://www.codefactor.io/repository/github/keidan/libessl
 [license]: https://github.com/Keidan/libessl/blob/master/license.txt
