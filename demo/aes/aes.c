@@ -6,7 +6,7 @@ int main(int argc, char** argv)
 {
   (void)argc;/* remove warning */
   (void)argv;/* remove warning */
-#ifndef OPENSSL_NO_AES
+#ifdef ESSL_SUPPORT_AES
   essl_aes_t ctx;
   
 
@@ -57,6 +57,6 @@ int main(int argc, char** argv)
   essl_aes_release(ctx);
 #else
   printf("AES not supported\n");
-#endif /* OPENSSL_NO_AES */
+#endif /* ESSL_SUPPORT_AES */
   return 0;
 }
