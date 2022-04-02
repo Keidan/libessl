@@ -306,33 +306,27 @@ int essl_md5_do_hash_file(const char* filename, essl_md5_digest_t result)
  */ 
 int essl_base64_encode(const char* input, const size_t ilength, char** output, size_t* olength)
 {
-  BIO* bio;
+  BIO* bio_mem;
   BIO* base64;
-  FILE* file;
-  int esize = 4 * ceil((double)ilength / 3);
-  *output = malloc(esize + 1);
+  BUF_MEM* buff_ptr;
+
+  base64 = BIO_new(BIO_f_base64());
+  bio_mem = BIO_new(BIO_s_mem());
+  base64 = BIO_push(base64, bio_mem);
+  BIO_write(base64, input, ilength);
+  BIO_flush(base64);
+  BIO_get_mem_ptr(base64, &buff_ptr);
+
+  *output = malloc(buff_ptr->length + 1);
   if(*output == NULL)
   {
     errno = ENOMEM;
     return -1;
   }
-  *olength = esize;
-  file = fmemopen(*output, esize + 1, "w");
-  if(*output == NULL)
-  {
-    *olength = 0;
-    free(*output);
-    errno = EIO;
-    return -1;
-  }
-  base64 = BIO_new(BIO_f_base64());
-  bio = BIO_new_fp(file, BIO_NOCLOSE);
-  bio = BIO_push(base64, bio);
-  BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-  BIO_write(bio, input, ilength);
-  (void)BIO_flush(bio);
-  BIO_free_all(bio);
-  fclose(file);
+  memcpy(*output, buff_ptr->data, buff_ptr->length - 1);
+  (*output)[buff_ptr->length - 1] = 0;
+  *olength = buff_ptr->length;
+  BIO_free_all(base64);
   errno = 0;
   return 0;
 }
@@ -345,56 +339,33 @@ int essl_base64_encode(const char* input, const size_t ilength, char** output, s
  * @param[out] olength The decoded message length.
  * @return -1 on error, otherwise 0 (see errno for more details).
  */ 
-int essl_base64_decode(const char* input, const size_t ilength, char**output, size_t* olength)
+int essl_base64_decode(const char* input, const size_t ilength, char** output, size_t* olength)
 {
-  BIO* bio;
   BIO* base64;
-  FILE* file;
-  int dsize = essl_base64_adjust_decode_length(input, ilength);
+  BIO* bio_mem;
+  int reads;
 
-  *output = malloc(dsize + 1);
+
+  base64 = BIO_new(BIO_f_base64());
+  BIO_set_flags(base64, BIO_FLAGS_BASE64_NO_NL);
+  bio_mem = BIO_new_mem_buf(input, ilength);
+  bio_mem = BIO_push(base64, bio_mem);
+
+  *output = (char *)malloc(ilength);
   if(*output == NULL)
   {
     errno = ENOMEM;
     return -1;
   }
-  file = fmemopen((void*)input, ilength, "r");
-  if(*output == NULL)
-  {
-    free(*output);
-    errno = EIO;
-    return -1;
-  }
-  base64 = BIO_new(BIO_f_base64());
-  bio = BIO_new_fp(file, BIO_NOCLOSE);
-  bio = BIO_push(base64, bio);
-  BIO_set_flags(bio, BIO_FLAGS_BASE64_NO_NL);
-  dsize = BIO_read(bio, *output, ilength);
-  (*output)[dsize] = '\0';
-     
-  BIO_free_all(bio);
-  fclose(file);
-  *olength = dsize;
+  memset(*output, 0, ilength);
+  reads = BIO_read(bio_mem, *output, ilength);
+  BIO_free_all(bio_mem);
+
+  *olength = reads;
   errno = 0;
   return 0;
 }
 
-/**
- * @brief Adjust the length of the decoded message.
- * @param[in] input The base64 buffer length
- * @param[in] ilength The encoded message length.
- * @return The decoded length of the base64 message.
- */
-size_t essl_base64_adjust_decode_length(const char* input, const size_t ilength)
-{
-  size_t padding = 0;
-  /* Check for trailing '=''s as padding */
-  if(input[ilength-1] == '=' && input[ilength-2] == '=')
-    padding = 2;
-  else if (input[ilength-1] == '=')
-    padding = 1;
-  return ilength*0.75 - padding;
-}
 #endif /* ESSL_SUPPORT_BASE64 */
 
 
@@ -837,8 +808,6 @@ essl_aes_t essl_aes_initialize(const uint8_t* key_data, size_t key_data_len, con
 /**
  * @brief Release of resources allocated by the essl_aes_initialize function.
  * @param[out] context The AES context.
- * @param[out] enc_ctx Context used for encryption.
- * @param[out] dec_ctx Context used for decryption.*
  */
 void essl_aes_release(essl_aes_t context)
 {
@@ -867,7 +836,6 @@ void essl_aes_release(essl_aes_t context)
 /**
  * @brief Encryption of the text pointed by 'plain_text'.
  * @param[in] context The AES context.
- * @param[in] enc_ctx Context used for encryption.
  * @param[in] plaintext The plaintext to encrypt.
  * @param[out] len The size of the text, this size will be updated at the output of the function, this update will correspond to the size of the output buffer.
  * @return Returns the encrypted buffer (WARNING: a malloc is done on this buffer, the user must free it), otherwise NULL.
@@ -906,7 +874,6 @@ uint8_t* essl_aes_encrypt(essl_aes_t context, const uint8_t* plaintext, size_t* 
 /**
  * @brief Decryption of the text pointed by 'cipher_text'.
  * @param[in] context The AES context.
- * @param[in] dec_ctx Context used for decryption.
  * @param[in] ciphertext The cipher text to decrypt.
  * @param[out] len The size of the text, this size will be updated at the output of the function, this update will correspond to the size of the output buffer.
  * @return Returns the plaintext buffer (WARNING: a malloc is done on this buffer, the user must free it), otherwise NULL.

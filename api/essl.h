@@ -274,13 +274,6 @@ extern "C" {
    */ 
   int essl_base64_decode(const char* input, const size_t ilength, char** output, size_t* olength);
 
-  /**
-   * @brief Get the length of the decoded message.
-   * @param[in] input The base64 buffer length
-   * @param[in] ilength The encoded message length.
-   * @return The decoded length of the base64 message.
-   */
-  size_t essl_base64_adjust_decode_length(const char* input, const size_t ilength);
 #endif /* OPENSSL_NO_BIO */
 
 
@@ -469,15 +462,12 @@ extern "C" {
   /**
    * @brief Release of resources allocated by the essl_aes_initialize function.
    * @param[out] context The AES context.
-   * @param[out] enc_ctx Context used for encryption.
-   * @param[out] dec_ctx Context used for decryption.*
    */
   void essl_aes_release(essl_aes_t context);
 
   /**
    * @brief Encryption of the text pointed by 'plain_text'.
    * @param[in] context The AES context.
-   * @param[in] enc_ctx Context used for encryption.
    * @param[in] plaintext The plaintext to encrypt.
    * @param[out] len The size of the text, this size will be updated at the output of the function, this update will correspond to the size of the output buffer.
    * @return Returns the encrypted buffer (WARNING: a malloc is done on this buffer, the user must free it), otherwise NULL.
@@ -487,7 +477,6 @@ extern "C" {
   /**
    * @brief Decryption of the text pointed by 'cipher_text'.
    * @param[in] context The AES context.
-   * @param[in] dec_ctx Context used for decryption.
    * @param[in] ciphertext The cipher text to decrypt.
    * @param[out] len The size of the text, this size will be updated at the output of the function, this update will correspond to the size of the output buffer.
    * @return Returns the plaintext buffer (WARNING: a malloc is done on this buffer, the user must free it), otherwise NULL.
